@@ -16,5 +16,9 @@ logs/
 .hashes/
 .DS_Store
 
+hf_exports/
+
+models/
+
 # Jupyter
 *.local/
