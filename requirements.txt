@@ -12,3 +12,4 @@ transformers
 accelerate
 huggingface_hub
 sentencepiece
+ipykernel
