@@ -1,0 +1,1 @@
+''' base arabic yehia model'''
