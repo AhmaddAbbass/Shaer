@@ -9,7 +9,7 @@ __pycache__/
 
 .env
 # data & outputs
-data/
+
 checkpoints/
 finals/
 reports/
@@ -19,7 +19,7 @@ logs/
 
 hf_exports/
 
-models/
+
 
 # Jupyter
 *.local/
