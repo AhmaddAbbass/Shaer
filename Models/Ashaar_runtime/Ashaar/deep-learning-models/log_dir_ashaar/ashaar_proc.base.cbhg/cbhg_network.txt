@@ -1,0 +1,117 @@
+CBHGModel(
+  (embedding): Embedding(44, 256)
+  (cbhg): CBHG(
+    (relu): ReLU()
+    (conv1d_banks): ModuleList(
+      (0): BatchNormConv1d(
+        (conv1d): Conv1d(256, 256, kernel_size=(1,), stride=(1,), bias=False)
+        (bn): BatchNorm1d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (activation): ReLU()
+      )
+      (1): BatchNormConv1d(
+        (conv1d): Conv1d(256, 256, kernel_size=(2,), stride=(1,), padding=(1,), bias=False)
+        (bn): BatchNorm1d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (activation): ReLU()
+      )
+      (2): BatchNormConv1d(
+        (conv1d): Conv1d(256, 256, kernel_size=(3,), stride=(1,), padding=(1,), bias=False)
+        (bn): BatchNorm1d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (activation): ReLU()
+      )
+      (3): BatchNormConv1d(
+        (conv1d): Conv1d(256, 256, kernel_size=(4,), stride=(1,), padding=(2,), bias=False)
+        (bn): BatchNorm1d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (activation): ReLU()
+      )
+      (4): BatchNormConv1d(
+        (conv1d): Conv1d(256, 256, kernel_size=(5,), stride=(1,), padding=(2,), bias=False)
+        (bn): BatchNorm1d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (activation): ReLU()
+      )
+      (5): BatchNormConv1d(
+        (conv1d): Conv1d(256, 256, kernel_size=(6,), stride=(1,), padding=(3,), bias=False)
+        (bn): BatchNorm1d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (activation): ReLU()
+      )
+      (6): BatchNormConv1d(
+        (conv1d): Conv1d(256, 256, kernel_size=(7,), stride=(1,), padding=(3,), bias=False)
+        (bn): BatchNorm1d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (activation): ReLU()
+      )
+      (7): BatchNormConv1d(
+        (conv1d): Conv1d(256, 256, kernel_size=(8,), stride=(1,), padding=(4,), bias=False)
+        (bn): BatchNorm1d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (activation): ReLU()
+      )
+      (8): BatchNormConv1d(
+        (conv1d): Conv1d(256, 256, kernel_size=(9,), stride=(1,), padding=(4,), bias=False)
+        (bn): BatchNorm1d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (activation): ReLU()
+      )
+      (9): BatchNormConv1d(
+        (conv1d): Conv1d(256, 256, kernel_size=(10,), stride=(1,), padding=(5,), bias=False)
+        (bn): BatchNorm1d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (activation): ReLU()
+      )
+      (10): BatchNormConv1d(
+        (conv1d): Conv1d(256, 256, kernel_size=(11,), stride=(1,), padding=(5,), bias=False)
+        (bn): BatchNorm1d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (activation): ReLU()
+      )
+      (11): BatchNormConv1d(
+        (conv1d): Conv1d(256, 256, kernel_size=(12,), stride=(1,), padding=(6,), bias=False)
+        (bn): BatchNorm1d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (activation): ReLU()
+      )
+      (12): BatchNormConv1d(
+        (conv1d): Conv1d(256, 256, kernel_size=(13,), stride=(1,), padding=(6,), bias=False)
+        (bn): BatchNorm1d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (activation): ReLU()
+      )
+      (13): BatchNormConv1d(
+        (conv1d): Conv1d(256, 256, kernel_size=(14,), stride=(1,), padding=(7,), bias=False)
+        (bn): BatchNorm1d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (activation): ReLU()
+      )
+      (14): BatchNormConv1d(
+        (conv1d): Conv1d(256, 256, kernel_size=(15,), stride=(1,), padding=(7,), bias=False)
+        (bn): BatchNorm1d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (activation): ReLU()
+      )
+      (15): BatchNormConv1d(
+        (conv1d): Conv1d(256, 256, kernel_size=(16,), stride=(1,), padding=(8,), bias=False)
+        (bn): BatchNorm1d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (activation): ReLU()
+      )
+    )
+    (max_pool1d): MaxPool1d(kernel_size=2, stride=1, padding=1, dilation=1, ceil_mode=False)
+    (conv1d_projections): ModuleList(
+      (0): BatchNormConv1d(
+        (conv1d): Conv1d(4096, 128, kernel_size=(3,), stride=(1,), padding=(1,), bias=False)
+        (bn): BatchNorm1d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (activation): ReLU()
+      )
+      (1): BatchNormConv1d(
+        (conv1d): Conv1d(128, 256, kernel_size=(3,), stride=(1,), padding=(1,), bias=False)
+        (bn): BatchNorm1d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      )
+    )
+    (pre_highway): Linear(in_features=256, out_features=256, bias=False)
+    (highways): ModuleList(
+      (0-3): 4 x Highway(
+        (H): Linear(in_features=256, out_features=256, bias=True)
+        (T): Linear(in_features=256, out_features=256, bias=True)
+        (relu): ReLU()
+        (sigmoid): Sigmoid()
+      )
+    )
+    (gru): GRU(256, 256, batch_first=True, bidirectional=True)
+  )
+  (post_cbhg_layers): ModuleList(
+    (0): LSTM(512, 256, batch_first=True, bidirectional=True)
+    (1): BatchNorm1d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    (2): LSTM(512, 256, batch_first=True, bidirectional=True)
+    (3): BatchNorm1d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+  )
+  (projections): Linear(in_features=512, out_features=17, bias=True)
+)
