@@ -2,29 +2,42 @@
 Meter-level reward utilities for Arabic poetry generation (GRPO, RL, etc.).
 
 This module combines:
-1) A Hugging Face MARBERT meter classifier
+1) An AraPoemBERT-based meter classifier
+   (default: `faisalq/bert-base-arapoembert`
+    assumed to be used with a meter classification head)
 2) The Ashaar `BaitAnalysis` structural meter analysis
 
-Given a generated bayt (two hemistichs separated by ``[sep]``), it produces:
-- A MARBERT probability distribution over meters
+Given a generated bayt (two hemistichs optionally separated by `[sep]`), it produces:
+- A classifier probability distribution over meters
 - A structural similarity score from Ashaar (0–1)
 - A combined scalar reward suitable for GRPO
 
 Example
 -------
-from meter_reward import meter_reward, marbert_meter_scores, ashaar_meter_pattern_score
+from meter_reward import meter_reward, classifier_meter_scores, ashaar_meter_pattern_score, MeterRewardConfig
 
 text = "ويوم نلتقي فيه قصير[sep]يطول اليوم لا ألقاك فيه"
+target_meter = "البسيط"
 
-scores = marbert_meter_scores(text)
-ashaar_score = ashaar_meter_pattern_score(text)
-reward = meter_reward(text)["reward"]
+cfg = MeterRewardConfig(
+    classifier_weight=0.5,
+    ashaar_weight=0.5,
+    classifier_target_label=target_meter,
+)
+
+res = meter_reward(text, config=cfg)
+print(res["reward"], res["classifier_score"], res["ashaar_score"])
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, Optional
+from typing import Dict, Optional, Any
+
+
+# ---------------------------------------------------------------------------
+# Lazy imports
+# ---------------------------------------------------------------------------
 
 
 def _lazy_import_transformers_pipeline():
@@ -33,15 +46,20 @@ def _lazy_import_transformers_pipeline():
         from transformers import pipeline  # type: ignore
     except ImportError as exc:
         raise ImportError(
-            "transformers is required for MARBERT meter rewards. "
-            "Install it (see requirements.txt) before using MARBERT-based scoring."
+            "transformers is required for AraPoemBERT-based meter rewards. "
+            "Install it (see requirements.txt) before using classifier-based scoring."
         ) from exc
-
     return pipeline
 
 
 def _lazy_import_bait_analysis():
-    """Lazily import Ashaar BaitAnalysis to avoid side effects on import."""
+    """
+    Lazily import Ashaar BaitAnalysis and the empty_analysis sentinel.
+
+    This expects that:
+    - The `Ashaar_runtime` repo is available on PYTHONPATH.
+    - `Ashaar.bait_analysis` can be imported.
+    """
     try:
         from Ashaar.bait_analysis import BaitAnalysis, empty_analysis  # type: ignore
     except ImportError as exc:
@@ -50,7 +68,6 @@ def _lazy_import_bait_analysis():
             "Make sure you are running from `Models/Ashaar_runtime` or that this "
             "directory is on PYTHONPATH."
         ) from exc
-
     return BaitAnalysis, empty_analysis
 
 
@@ -58,54 +75,68 @@ def _lazy_import_bait_analysis():
 # Global singletons (created lazily so they are shared across calls)
 # ---------------------------------------------------------------------------
 
-_MARBERT_CLASSIFIER = None
-_BAIT_ANALYSIS = None
+_DEFAULT_METER_CLASSIFIER_MODEL = "faisalq/bert-base-arapoembert"
+
+_METER_CLASSIFIER = None  # type: ignore[var-annotated]
+_BAIT_ANALYSIS: Any = None
+_EMPTY_ANALYSIS: Any = None
 
 
-def _get_marbert_classifier(
-    model_name: str = "Ammar-alhaj-ali/arabic-MARBERT-poetry-classification",
+def _get_meter_classifier(
+    model_name: str = _DEFAULT_METER_CLASSIFIER_MODEL,
     device: Optional[int] = None,
 ):
     """
-    Return a cached Hugging Face pipeline for MARBERT meter classification.
+    Return a cached Hugging Face pipeline for meter classification.
 
     Parameters
     ----------
     model_name:
-        Hugging Face model identifier.
+        Hugging Face model identifier. By default:
+        `faisalq/bert-base-arapoembert` (AraPoemBERT base, assumed fine-tuned
+        or wrapped for meter classification).
     device:
         Optional device index for GPU; if None, uses the transformers default.
     """
-    global _MARBERT_CLASSIFIER
+    global _METER_CLASSIFIER
 
-    if _MARBERT_CLASSIFIER is None:
+    if _METER_CLASSIFIER is None:
         pipeline = _lazy_import_transformers_pipeline()
         kwargs = {}
         if device is not None:
             kwargs["device"] = device
-        _MARBERT_CLASSIFIER = pipeline(
+        _METER_CLASSIFIER = pipeline(
             "text-classification",
             model=model_name,
             **kwargs,
         )
-    return _MARBERT_CLASSIFIER
+    return _METER_CLASSIFIER
 
 
 def _get_bait_analysis():
     """
-    Return a cached Ashaar `BaitAnalysis` instance.
+    Return a cached Ashaar `BaitAnalysis` instance and ensure the empty sentinel is set.
 
     Uses the default configuration, which expects:
     - `test.yml` in the Ashaar_runtime root
     - `deep-learning-models` folder under `Ashaar_runtime/Ashaar`
     """
-    global _BAIT_ANALYSIS
+    global _BAIT_ANALYSIS, _EMPTY_ANALYSIS
 
-    if _BAIT_ANALYSIS is None:
-        BaitAnalysis, _ = _lazy_import_bait_analysis()
-        # Use default `abs_path="."` and package-relative paths from Ashaar.
+    if _BAIT_ANALYSIS is None or _EMPTY_ANALYSIS is None:
+        BaitAnalysis, empty_analysis = _lazy_import_bait_analysis()
         _BAIT_ANALYSIS = BaitAnalysis()
+        _EMPTY_ANALYSIS = empty_analysis
+
     return _BAIT_ANALYSIS
+
+
+def _get_empty_analysis_sentinel():
+    """Return the global empty_analysis sentinel from Ashaar, if initialized."""
+    global _EMPTY_ANALYSIS
+    if _EMPTY_ANALYSIS is None:
+        _get_bait_analysis()
+    return _EMPTY_ANALYSIS
 
 
 def _normalize_text_for_ashaar(text: str) -> str:
@@ -131,37 +162,37 @@ def _normalize_text_for_ashaar(text: str) -> str:
 @dataclass
 class MeterRewardConfig:
     """
-    Configuration for combining MARBERT and Ashaar scores into a single reward.
+    Configuration for combining classifier and Ashaar scores into a single reward.
 
     Attributes
     ----------
-    marbert_weight:
-        Relative weight for the MARBERT confidence score.
+    classifier_weight:
+        Relative weight for the classifier confidence score.
     ashaar_weight:
         Relative weight for the Ashaar structural similarity score.
-    marbert_target_label:
-        If provided, use the MARBERT probability assigned to this label
+    classifier_target_label:
+        If provided, use the classifier probability assigned to this label
         (exact string match on `classifier(text)[i]['label']`).
-        If None, the MARBERT component uses the maximum probability.
+        If None, the classifier component uses the maximum probability.
     """
 
-    marbert_weight: float = 0.5
+    classifier_weight: float = 0.5
     ashaar_weight: float = 0.5
-    marbert_target_label: Optional[str] = None
+    classifier_target_label: Optional[str] = None
 
 
 # ---------------------------------------------------------------------------
-# MARBERT-based scoring
+# Classifier-based scoring (AraPoemBERT-based meter classifier)
 # ---------------------------------------------------------------------------
 
 
-def marbert_meter_scores(
+def classifier_meter_scores(
     text: str,
-    model_name: str = "Ammar-alhaj-ali/arabic-MARBERT-poetry-classification",
+    model_name: str = _DEFAULT_METER_CLASSIFIER_MODEL,
     device: Optional[int] = None,
 ) -> Dict[str, float]:
     """
-    Return MARBERT's probability distribution over poetic meters for a bayt.
+    Return the classifier's probability distribution over poetic meters for a bayt.
 
     Parameters
     ----------
@@ -169,20 +200,25 @@ def marbert_meter_scores(
         The bayt text. For two-hemistich verses pass it as:
         "الشطر الأول[sep]الشطر الثاني".
     model_name:
-        Hugging Face model name or path.
+        Hugging Face model name or path. By default uses the AraPoemBERT base
+        model: `faisalq/bert-base-arapoembert` (assumed to have a classification head).
     device:
         Optional device index for GPU; if None, transformers chooses.
 
     Returns
     -------
     dict
-        Mapping from MARBERT `label` → `score` (float in [0, 1]).
-    """
-    classifier = _get_marbert_classifier(model_name=model_name, device=device)
+        Mapping from classifier `label` → `score` (float in [0, 1]).
 
-    # The pipeline returns a list of dicts. By default this is top-1; using
-    # `top_k=None` gives full distribution for newer transformers, but to keep
-    # compatibility we just handle the returned list as-is.
+    Notes
+    -----
+    Depending on transformers version, the pipeline may return:
+    - a single dict, or
+    - a list of dicts (top-k results).
+    This function normalizes both to `Dict[label, score]`.
+    """
+    classifier = _get_meter_classifier(model_name=model_name, device=device)
+
     results = classifier(text)
 
     # Some transformers versions return a single dict instead of list; normalize.
@@ -219,10 +255,12 @@ def ashaar_meter_pattern_score(text: str) -> float:
         Mean structural similarity score in [0, 1]. Returns 0.0 if analysis
         fails or if no valid shatrain are produced.
     """
-    BaitAnalysis, empty_analysis = _lazy_import_bait_analysis()
     analysis_obj = _get_bait_analysis()
+    empty_analysis = _get_empty_analysis_sentinel()
 
     bait = _normalize_text_for_ashaar(text)
+
+    # Important: predict_closest=True to actually populate `closest_patterns`
     analysis = analysis_obj.analyze(
         baits=[bait],
         short_qafiyah=False,
@@ -230,17 +268,27 @@ def ashaar_meter_pattern_score(text: str) -> float:
         highlight_output=False,
         predict_era=False,
         predict_theme=False,
-        predict_closest=False,
+        predict_closest=True,
     )
 
-    # If for some reason analysis returned the sentinel empty dict, give 0 reward.
-    if analysis is empty_analysis or not analysis.get("closest_patterns"):
+    # Some Ashaar versions return `empty_analysis` sentinel on failure.
+    if analysis is empty_analysis:
         return 0.0
 
-    ratios = [float(t[1]) for t in analysis["closest_patterns"] if len(t) >= 2]
+    closest_patterns = analysis.get("closest_patterns")
+    if not closest_patterns:
+        return 0.0
+
+    # closest_patterns is expected to be a list of tuples:
+    # (pattern_str, ratio, taf3ilat_str, ...)
+    ratios = [float(t[1]) for t in closest_patterns if len(t) >= 2]
     if not ratios:
         return 0.0
-    return sum(ratios) / len(ratios)
+
+    # Clamp to [0, 1] just in case
+    mean_ratio = sum(ratios) / len(ratios)
+    mean_ratio = max(0.0, min(1.0, mean_ratio))
+    return mean_ratio
 
 
 # ---------------------------------------------------------------------------
@@ -252,15 +300,15 @@ def meter_reward(
     text: str,
     config: Optional[MeterRewardConfig] = None,
     *,
-    model_name: str = "Ammar-alhaj-ali/arabic-MARBERT-poetry-classification",
+    model_name: str = _DEFAULT_METER_CLASSIFIER_MODEL,
     device: Optional[int] = None,
 ) -> Dict[str, object]:
     """
     Compute a combined meter reward for a generated bayt.
 
     The reward is a weighted combination of:
-    - MARBERT confidence (either max probability, or probability for a target
-      label if `config.marbert_target_label` is provided)
+    - classifier confidence (either max probability, or probability for a target
+      label if `config.classifier_target_label` is provided)
     - Ashaar structural similarity score (pattern-level similarity)
 
     Parameters
@@ -268,62 +316,85 @@ def meter_reward(
     text:
         Generated bayt, with shatrain separated by `[sep]` if applicable.
     config:
-        `MeterRewardConfig` controlling component weights and MARBERT target label.
-        If None, uses the default weights (0.5 / 0.5) and max-probability MARBERT.
+        `MeterRewardConfig` controlling component weights and classifier target label.
+        If None, uses the default weights (0.5 / 0.5) and max-probability classifier.
     model_name:
-        Hugging Face MARBERT model identifier.
+        Hugging Face classifier model identifier. Defaults to
+        `faisalq/bert-base-arapoembert`.
     device:
-        Optional device index for GPU for MARBERT.
+        Optional device index for GPU for the classifier.
 
     Returns
     -------
     dict
         {
-            "reward": float,           # combined scalar reward in [0, 1]
-            "marbert_score": float,    # MARBERT component (0–1)
-            "ashaar_score": float,     # Ashaar structural component (0–1)
-            "marbert_distribution": {label: prob, ...},
+            "reward": float,             # combined scalar reward in [0, 1]
+            "classifier_score": float,   # classifier component (0–1)
+            "ashaar_score": float,       # Ashaar structural component (0–1)
+            "classifier_distribution": {label: prob, ...},
         }
     """
     if config is None:
         config = MeterRewardConfig()
 
-    marbert_dist: Dict[str, float] = {}
-    marbert_score = 0.0
+    # -------------------------
+    # Classifier component
+    # -------------------------
+    classifier_dist: Dict[str, float] = {}
+    classifier_score = 0.0
 
-    if config.marbert_weight > 0.0:
-        marbert_dist = marbert_meter_scores(
+    if config.classifier_weight > 0.0:
+        classifier_dist = classifier_meter_scores(
             text=text,
             model_name=model_name,
             device=device,
         )
-        if marbert_dist:
-            if config.marbert_target_label is None:
+        if classifier_dist:
+            if config.classifier_target_label is None:
                 # Use the highest confidence across meters.
-                marbert_score = max(marbert_dist.values())
+                classifier_score = max(classifier_dist.values())
             else:
                 # Use the confidence assigned to the target meter label.
-                marbert_score = float(marbert_dist.get(config.marbert_target_label, 0.0))
+                classifier_score = float(
+                    classifier_dist.get(config.classifier_target_label, 0.0)
+                )
 
+    # Ensure score is in [0, 1]
+    classifier_score = max(0.0, min(1.0, classifier_score))
+
+    # -------------------------
+    # Ashaar component
+    # -------------------------
     ashaar_score = 0.0
     if config.ashaar_weight > 0.0:
         ashaar_score = ashaar_meter_pattern_score(text)
+        ashaar_score = max(0.0, min(1.0, ashaar_score))
 
-    total_weight = max(config.marbert_weight + config.ashaar_weight, 1e-8)
-    combined = (config.marbert_weight * marbert_score + config.ashaar_weight * ashaar_score) / total_weight
+    # -------------------------
+    # Combine
+    # -------------------------
+    total_weight = config.classifier_weight + config.ashaar_weight
+    if total_weight <= 0.0:
+        combined = 0.0
+    else:
+        combined = (
+            config.classifier_weight * classifier_score
+            + config.ashaar_weight * ashaar_score
+        ) / total_weight
+
+    combined = max(0.0, min(1.0, combined))
 
     return {
         "reward": float(combined),
-        "marbert_score": float(marbert_score),
+        "classifier_score": float(classifier_score),
         "ashaar_score": float(ashaar_score),
-        "marbert_distribution": marbert_dist,
+        "classifier_distribution": classifier_dist,
     }
 
 
 __all__ = [
     "MeterRewardConfig",
-    "marbert_meter_scores",
+    "classifier_meter_scores",
     "ashaar_meter_pattern_score",
     "meter_reward",
 ]
-
