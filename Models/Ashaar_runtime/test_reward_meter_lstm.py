@@ -3,14 +3,14 @@
 from meter_reward_LSTM import meter_reward, MeterRewardConfig
 
 def main():
-    text = "عرفتَ منازلَ أهلها فصَبت لهم واقتادها شجوٌ وطولُ شجونِ"
+    text = "شَهيدٌ بِنَفْسٍ راسِخٍ عَزْم لِرَبِّهِ # مَقامٌ خُلودٍ عِندْ إِلَهٍ لِخُلْدِهِ"
 
     # This should match the classifier's label string for the desired meter
-    target_meter = "الكامل"
+    target_meter = "الطويل"
 
     cfg = MeterRewardConfig(
-        classifier_weight=0.7,
-        ashaar_weight=0.3,
+        classifier_weight=1,
+        ashaar_weight=0,
         classifier_target_label=target_meter,
     )
 
