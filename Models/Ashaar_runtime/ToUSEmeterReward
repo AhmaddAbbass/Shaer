@@ -5,7 +5,7 @@ import sys
 sys.stdout.reconfigure(encoding="utf-8")
 from meter_reward import meter_reward, MeterRewardConfig
 
-text = "ما لي أُكَتِّمُ حُبًّا قَدْ بَرَى جَسَدي وَتَدّعي حُبّ سَيفِ الدّوْلةِ الأُمَمُ"
+text = "عرفتَ منازلَ أهلها فصَبت لهم واقتادها شجوٌ وطولُ شجونِ"
 cfg = MeterRewardConfig(marbert_weight=0.5, ashaar_weight=0.5)
 res = meter_reward(text, config=cfg)
 print(res)  # or pick fields: res["reward"], res["marbert_distribution"], etc.
