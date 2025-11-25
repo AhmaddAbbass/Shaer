@@ -33,7 +33,9 @@ class ConfigManager:
         available_models = ["baseline", "cbhg", "seq2seq", "tacotron_based", "gpt"]
         if model_kind not in available_models:
             raise TypeError(f"model_kind must be in {available_models}")
-        self.config_path = Path(config_path)
+        # Use an absolute path for the config so all derived paths are anchored
+        # to the config location instead of the current working directory.
+        self.config_path = Path(config_path).resolve()
         self.model_kind = model_kind
         self.yaml = ruamel.yaml.YAML()
         self.config: Dict[str, Any] = self._load_config()
@@ -46,12 +48,12 @@ class ConfigManager:
             ]
         )
 
-        self.data_dir = Path(
-            os.path.join(self.config["data_directory"], self.config["data_type"])
-        )
-        self.base_dir = Path(
-            os.path.join(self.config["log_directory"], self.session_name)
-        )
+        config_root = self.config_path.parent
+
+        # Anchor data/log paths to the config's directory to avoid dependence
+        # on the process working directory.
+        self.data_dir = (config_root / self.config["data_directory"] / self.config["data_type"]).resolve()
+        self.base_dir = (config_root / self.config["log_directory"] / self.session_name).resolve()
         self.log_dir = Path(os.path.join(self.base_dir, "logs"))
         self.prediction_dir = Path(os.path.join(self.base_dir, "predictions"))
         self.plot_dir = Path(os.path.join(self.base_dir, "plots"))
