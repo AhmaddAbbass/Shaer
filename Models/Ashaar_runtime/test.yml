@@ -2,7 +2,7 @@ session_name: base
 
 data_directory: "data"
 data_type: "ashaar_proc"
-log_directory: "deep-learning-models/log_dir_ashaar"
+log_directory: "Ashaar/deep-learning-models/log_dir_ashaar"
 load_training_data: true
 load_test_data: false
 load_validation_data: true
