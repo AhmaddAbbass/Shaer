@@ -40,42 +40,15 @@ def _get_llm():
 
     _llm_tokenizer = _llm.get_tokenizer()
 
+    # Judge: we only need a small numeric answer
     _judge_sampling = SamplingParams(
-        max_tokens=8,             # just want a scalar like 0.83
+        max_tokens=8,             # enough for "9.3" or "10"
         temperature=0.0,          # deterministic judge
         top_p=1.0,
         truncate_prompt_tokens=512,
     )
 
     return _llm, _llm_tokenizer, _judge_sampling
-
-
-_SCORE_RE = re.compile(r"([01](?:\.\d+)?)")
-
-
-def _parse_score(text):
-    """
-    Extract a float in [0, 1] from judge output.
-    If it fails, return 0.0.
-    """
-    if not text:
-        return 0.0
-
-    m = _SCORE_RE.search(text)
-    if not m:
-        return 0.0
-
-    try:
-        val = float(m.group(1))
-    except Exception:
-        return 0.0
-
-    # clamp just in case
-    if val < 0.0:
-        val = 0.0
-    if val > 1.0:
-        val = 1.0
-    return val
 
 
 def _normalize_arabic(s):
@@ -86,78 +59,93 @@ def _normalize_arabic(s):
     return t.strip()
 
 
+def _parse_score_0_to_10(text):
+    """
+    Extract a float in [0, 10] from judge output.
+    If parsing fails, return 0.0.
+    """
+    if not text:
+        return 0.0
+
+    # Find all numbers like 7, 7.5, 10, 3.25, etc.
+    candidates = re.findall(r"(\d+(?:\.\d+)?)", text)
+    for c in candidates:
+        try:
+            val = float(c)
+        except Exception:
+            continue
+
+        if 0.0 <= val <= 10.0:
+            return val
+
+    return 0.0
+
+
 def meaning_reward(completions, prompts, poem_description=None, trainer_state=None, **kwargs):
     """
     Meaning / semantic alignment reward.
 
-    Idea:
-      - Use Yehia (vLLM) as an Arabic judge.
-      - For each sample, ask:
-          "Here is a description of the poem, and here is the generated bayt.
-           Return a single number in [0, 1] measuring semantic alignment."
-      - Parse that scalar and use it as reward.
+    Uses Yehia (via vLLM) as a judge.
 
-    Inputs:
-      - completions: list of generated answers (strings or chat-style dicts)
-      - prompts: list of prompts (we don't really use them here)
-      - poem_description: list[str] from dataset column
+    For each sample:
+      - description = poem_description[i]
+      - verse       = completions[i]
+      - Ask Yehia: "Give me a single number between 0 and 10 describing semantic alignment."
 
     Returns:
-      - list[float] in [0, 1]
+      - list[float] in [0, 10]
     """
     llm, tokenizer, sampling = _get_llm()
 
     n = len(completions)
     rewards = [0.0] * n
 
-    # Normalize descriptions to list
+    # Normalize descriptions to a list aligned with completions
     if poem_description is None:
         descs = [None] * n
     else:
-        # TRL passes dataset columns as lists already
         descs = list(poem_description)
-        if len(descs) != n:
-            # just in case, pad/trim
-            descs = (descs + [None] * n)[:n]
-
-    # Build prompts for vLLM in one shot (batched)
-    prompts_text = []
+        if len(descs) < n:
+            descs = descs + [None] * (n - len(descs))
+        elif len(descs) > n:
+            descs = descs[:n]
 
     system_prompt = (
-        "أنت ناقد شعري عربي، متخصّص في تقييم مدى التزام الأبيات بمضمون الوصف المطلوب. "
-        "مهمّتك أن تعطي درجة واحدة بين 0 و 1 فقط."
+        "أنت ناقد شعري عربي متخصّص في تقييم مدى التزام الأبيات بالمضمون المطلوب. "
+        "مهمّتك أن تعطي رقمًا واحدًا بين 0 و 10 يعبّر عن مدى انسجام البيت مع الوصف من حيث المعنى والموضوع والجو الشعوري."
     )
+
+    prompts_text = []
 
     for i in range(n):
         verse_raw = _extract_text_from_completion(completions[i])
         verse = _normalize_arabic(verse_raw)
 
-        if not verse:
-            # empty answer → we keep reward 0
-            prompts_text.append(
-                "أرجع العدد 0 فقط بلا شرح."
-            )
-            continue
-
         desc = descs[i]
         desc_norm = _normalize_arabic(desc) if desc is not None else ""
 
         if not desc_norm:
-            # no description, we can only give a weak judgment
-            desc_norm = "الوصف غير متوفر، لكن حاول قياس منطقية البيت بشكل عام."
+            # No description → we evaluate only the clarity and coherence of the verse
+            desc_norm = "الوصف غير متوفر، قيّم فقط مدى وضوح المعنى وتماسك الموضوع في هذا البيت."
 
-        user_content = (
-            "الوصف المطلوب للقصيدة:\n"
-            f"{desc_norm}\n\n"
-            "البيت المقترح:\n"
-            f"{verse}\n\n"
-            "المطلوب:\n"
-            "- قيّم مدى انسجام هذا البيت مع الوصف من حيث المعنى والجو الشعوري.\n"
-            "- أرجع عدداً حقيقياً واحداً بين 0 و 1 فقط:\n"
-            "  0 يعني أن البيت لا علاقة له تقريباً بالوصف.\n"
-            "  1 يعني أن البيت منسجم جداً مع الوصف ومعناه مناسب بالكامل.\n"
-            "اكتب العدد فقط بدون أي كلمات أو شرح إضافي."
-        )
+        if not verse:
+            # Empty answer → force 0
+            user_content = (
+                "لا يوجد بيت مقترح، أرجِع الرقم 0 فقط بدون أي كلام إضافي."
+            )
+        else:
+            user_content = (
+                "الوصف المطلوب:\n"
+                f"{desc_norm}\n\n"
+                "البيت المقترح:\n"
+                f"{verse}\n\n"
+                "المطلوب:\n"
+                "- قيّم مدى انسجام هذا البيت مع الوصف من حيث المعنى والموضوع والجو الشعوري.\n"
+                "- أعطِ رقمًا واحدًا حقيقيًا بين 0 و 10 فقط، يمكن أن يكون عددًا كسريًا مثل 7.5 أو 9.0.\n"
+                "- 0 يعني أن البيت لا علاقة له تقريبًا بالوصف.\n"
+                "- 10 يعني انسجامًا عاليًا جدًا مع الوصف.\n\n"
+                "اكتب الرقم فقط بدون أي كلمات أو شرح أو رموز أخرى."
+            )
 
         messages = [
             {"role": "system", "content": system_prompt},
@@ -171,7 +159,7 @@ def meaning_reward(completions, prompts, poem_description=None, trainer_state=No
         )
         prompts_text.append(prompt)
 
-    # Run batched generation
+    # Use vLLM in batch
     outputs = llm.generate(prompts_text, sampling, use_tqdm=False)
 
     for i, out in enumerate(outputs):
@@ -179,6 +167,6 @@ def meaning_reward(completions, prompts, poem_description=None, trainer_state=No
             raw_text = (out.outputs[0].text or "").strip()
         else:
             raw_text = ""
-        rewards[i] = _parse_score(raw_text)
+        rewards[i] = _parse_score_0_to_10(raw_text)
 
     return rewards
