@@ -22,21 +22,42 @@ def _get_llm():
     if _llm is not None:
         return _llm, _llm_tokenizer, _judge_sampling
 
+    # Default: push vLLM to GPU 1 so GPU 0 stays free for the main model.
+    worker_devices = os.environ.setdefault("VLLM_WORKER_CUDA_DEVICES", "1")
+    # Also mask visibility for vLLM to avoid allocating on GPU 0.
+    os.environ.setdefault("CUDA_VISIBLE_DEVICES", worker_devices)
     model_path = os.environ.get("YEHIA_VLLM_MODEL_PATH", "Navid-AI/Yehia-7B-preview")
-    gpu_util = float(os.environ.get("YEHIA_VLLM_GPU_UTIL", "0.9"))
+    gpu_util = float(os.environ.get("YEHIA_VLLM_GPU_UTIL", "0.6"))
+    max_model_len = int(os.environ.get("YEHIA_VLLM_MAX_MODEL_LEN", "1024"))
 
-    print(f"[meaning_reward] Initializing vLLM LLM from: {model_path}")
-    print(f"[meaning_reward] vLLM GPU utilization: {gpu_util}")
+    def _init_llm(gu, mlen):
+        print(f"[meaning_reward] Initializing vLLM LLM from: {model_path}")
+        print(f"[meaning_reward] vLLM GPU utilization: {gu} | max_model_len: {mlen}")
+        return LLM(
+            model=model_path,
+            tokenizer=model_path,
+            trust_remote_code=True,
+            dtype="float16",
+            tensor_parallel_size=1,
+            gpu_memory_utilization=gu,
+            max_model_len=mlen,
+        )
 
-    _llm = LLM(
-        model=model_path,
-        tokenizer=model_path,
-        trust_remote_code=True,
-        dtype="float16",
-        tensor_parallel_size=1,
-        gpu_memory_utilization=gpu_util,
-        max_model_len=4096,
-    )
+    try:
+        _llm = _init_llm(gpu_util, max_model_len)
+    except ValueError as e:
+        # Recover from insufficient cache allocation by using more GPU and/or shorter context.
+        msg = str(e)
+        if "No available memory for the cache blocks" not in msg:
+            raise
+
+        fallback_gu = min(0.95, gpu_util + 0.2)
+        fallback_len = max(1024, max_model_len // 2)
+        print(
+            f"[meaning_reward] Retry vLLM init with higher gpu_memory_utilization={fallback_gu} "
+            f"and max_model_len={fallback_len} due to: {e}"
+        )
+        _llm = _init_llm(fallback_gu, fallback_len)
 
     _llm_tokenizer = _llm.get_tokenizer()
 
