@@ -24,3 +24,6 @@ hf_exports/
 # Jupyter
 *.local/
 Label_DATA/.env
+
+models/grpo_full_v1
+models/grpo_mini_v1
