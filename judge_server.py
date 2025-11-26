@@ -1,7 +1,8 @@
 # judge_server.py
+
 import os
 import re
-from typing import List
+from typing import List, Optional, Any
 
 from fastapi import FastAPI
 from pydantic import BaseModel
@@ -26,6 +27,8 @@ app = FastAPI()
 class ScoreItem(BaseModel):
     verse: str
     description: str
+    # NEW: optional previous verses context (joined as text)
+    previous_verses: Optional[str] = None
 
 
 class ScoreBatchRequest(BaseModel):
@@ -36,12 +39,12 @@ class ScoreBatchResponse(BaseModel):
     scores: List[float]
 
 
-_llm = None
+_llm: Optional[LLM] = None
 _tokenizer = None
-_sampling = None
+_sampling: Optional[SamplingParams] = None
 
 
-def _normalize_arabic(s: str) -> str:
+def _normalize_arabic(s: Any) -> str:
     if not isinstance(s, str):
         return ""
     t = s.replace("ـ", "")
@@ -75,7 +78,7 @@ def _get_llm():
     if _llm is not None:
         return _llm, _tokenizer, _sampling
 
-    def _init_llm(gu, mlen):
+    def _init_llm(gu: float, mlen: int) -> LLM:
         print(f"[judge] Initializing vLLM LLM from: {MODEL_ID}")
         print(f"[judge] vLLM GPU utilization: {gu} | max_model_len: {mlen}")
         return LLM(
@@ -117,29 +120,40 @@ def _get_llm():
 
 _SYSTEM_PROMPT = (
     "أنت ناقد شعري عربي متخصّص في تقييم مدى التزام الأبيات بالمضمون المطلوب. "
-    "مهمّتك أن تعطي رقمًا واحدًا بين 0 و 10 يعبّر عن مدى انسجام البيت مع الوصف من حيث المعنى والموضوع والجو الشعوري."
+    "مهمّتك أن تعطي رقمًا واحدًا بين 0 و 10 يعبّر عن مدى انسجام البيت بالمجمل "
+    "مع الوصف ومن حيث المعنى والموضوع والجو الشعوري، ومع ما سبقه من أبيات إن وُجدت."
 )
 
 
-def _build_user_content(desc_norm: str, verse: str) -> str:
+def _build_user_content(desc_norm: str, verse: str, prev_verses_norm: str) -> str:
+    """
+    Build the user-facing content for the judge LLM.
+    desc_norm: prose description of the poem (may be empty).
+    verse: candidate bayt.
+    prev_verses_norm: concatenated previous verses (may be empty).
+    """
     if not desc_norm:
-        desc_norm = (
-            "الوصف غير متوفر، قيّم فقط مدى وضوح المعنى وتماسك الموضوع في هذا البيت."
-        )
+        desc_norm = "الوصف غير متوفر، قيّم فقط مدى وضوح المعنى وتماسك الموضوع في هذا البيت."
 
     if not verse:
         return "لا يوجد بيت مقترح، أرجِع الرقم 0 فقط بدون أي كلام إضافي."
 
+    prev_block = ""
+    if prev_verses_norm:
+        prev_block = "الأبيات السابقة في القصيدة:\n" + prev_verses_norm + "\n\n"
+
     return (
         "الوصف المطلوب:\n"
         f"{desc_norm}\n\n"
+        f"{prev_block}"
         "البيت المقترح:\n"
         f"{verse}\n\n"
         "المطلوب:\n"
         "- قيّم مدى انسجام هذا البيت مع الوصف من حيث المعنى والموضوع والجو الشعوري.\n"
+        "- قيّم أيضًا مدى تماسكه مع الأبيات السابقة واستمرارية المعنى (إن وُجدت أبيات سابقة).\n"
         "- أعطِ رقمًا واحدًا حقيقيًا بين 0 و 10 فقط، يمكن أن يكون عددًا كسريًا مثل 7.5 أو 9.0.\n"
-        "- 0 يعني أن البيت لا علاقة له تقريبًا بالوصف.\n"
-        "- 10 يعني انسجامًا عاليًا جدًا مع الوصف.\n\n"
+        "- 0 يعني أن البيت لا علاقة له تقريبًا بالوصف أو بالأبيات السابقة.\n"
+        "- 10 يعني انسجامًا عاليًا جدًا مع الوصف ومع ما قبله من أبيات.\n\n"
         "اكتب الرقم فقط بدون أي كلمات أو شرح أو رموز أخرى."
     )
 
@@ -148,12 +162,13 @@ def _build_user_content(desc_norm: str, verse: str) -> str:
 def score_batch(req: ScoreBatchRequest):
     llm, tokenizer, sampling = _get_llm()
 
-    prompts = []
+    prompts: List[str] = []
     for item in req.items:
         verse_norm = _normalize_arabic(item.verse)
         desc_norm = _normalize_arabic(item.description)
+        prev_norm = _normalize_arabic(item.previous_verses or "")
 
-        user_content = _build_user_content(desc_norm, verse_norm)
+        user_content = _build_user_content(desc_norm, verse_norm, prev_norm)
 
         messages = [
             {"role": "system", "content": _SYSTEM_PROMPT},

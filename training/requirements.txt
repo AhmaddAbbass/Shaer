@@ -34,3 +34,9 @@ einops
 sentencepiece
 pyyaml
 ipykernel
+
+# --- NEW: judge + logging deps ---
+fastapi
+uvicorn[standard]
+requests
+tensorboard
