@@ -9,7 +9,7 @@ __pycache__/
 
 .env
 # data & outputs
-
+.pytest_cache/
 checkpoints/
 finals/
 reports/
