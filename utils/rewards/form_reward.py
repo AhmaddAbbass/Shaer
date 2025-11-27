@@ -11,6 +11,7 @@ What we reward:
 - We can reasonably split it into EXACTLY TWO hemistichs.
 - No obvious extra junk (3+ clauses, multiple newlines).
 - Hemistich lengths are reasonably balanced.
+- Overall bayt length is in a realistic range (~3–8 words).
 
 Returns:
 - form_reward(completions, prompts, ...) -> list[float] in [0, 1]
@@ -75,7 +76,7 @@ def _split_hemistichs_from_line(line: str) -> Tuple[List[str], str]:
     Strategy (in order):
     1) If "[sep]" present -> split there (you may never use this; it's just a bonus).
     2) If Arabic separators like "،" or "؛" or "/" exist, try splitting on them.
-    3) As a last resort, split by length near the middle (heuristic).
+    3) As a last resort, split by WORDS near the middle (heuristic).
 
     Returns:
       (segments_list, strategy_name)
@@ -99,30 +100,21 @@ def _split_hemistichs_from_line(line: str) -> Tuple[List[str], str]:
                 # still return them, but caller will see >2 and penalize
                 return parts, f"sep:{sep}(>2)"
 
-    # 3) Length-based heuristic: split near the middle at nearest space
-    if len(line) < 10:
+    # 3) WORD-based heuristic: split words near the middle.
+    words = line.split()
+    if len(words) < 2:
         # too short to sensibly have 2 hemistichs
         return [line], "short"
 
-    mid = len(line) // 2
+    mid = len(words) // 2
+    sadr_words = words[:mid]
+    ajz_words = words[mid:]
 
-    # find nearest space to the middle
-    left_space = line.rfind(" ", 0, mid)
-    right_space = line.find(" ", mid)
-
-    if left_space == -1 and right_space == -1:
-        # no spaces at all; just treat it as one chunk
-        return [line], "nospace"
-
-    # choose split that is closest to the center
-    candidates = [p for p in [left_space, right_space] if p != -1]
-    split_idx = min(candidates, key=lambda idx: abs(idx - mid))
-
-    first = line[:split_idx].strip()
-    second = line[split_idx + 1 :].strip()
+    first = " ".join(sadr_words).strip()
+    second = " ".join(ajz_words).strip()
     parts = [p for p in [first, second] if p]
 
-    return parts, "length-mid"
+    return parts, "word-mid"
 
 
 def _analyze_bayt_shape(text: str) -> dict:
@@ -134,9 +126,10 @@ def _analyze_bayt_shape(text: str) -> dict:
       - n_segments (after splitting main line into chunks)
       - has_two_hemistichs: bool
       - extra_segments: int (segments beyond 2)
-      - len1, len2 (if two hemistichs)
+      - len1, len2  (char lengths of two hemistichs)
       - balance_score in [0, 1] (1 = perfectly balanced)
       - arabic_density in [0, 1]
+      - word_count (total words in the bayt)
     """
     raw = text or ""
     norm = _normalize_whitespace(raw)
@@ -144,6 +137,9 @@ def _analyze_bayt_shape(text: str) -> dict:
     # Lines
     lines = _split_lines(norm)
     n_lines = len(lines)
+
+    tokens = norm.split()
+    word_count = len(tokens)
 
     if not lines:
         return {
@@ -155,6 +151,7 @@ def _analyze_bayt_shape(text: str) -> dict:
             "len2": 0,
             "balance_score": 0.0,
             "arabic_density": 0.0,
+            "word_count": 0,
         }
 
     # For poetry in this setup, we *want* essentially ONE line.
@@ -192,7 +189,28 @@ def _analyze_bayt_shape(text: str) -> dict:
         "len2": len2,
         "balance_score": float(balance_score),
         "arabic_density": float(arabic_density),
+        "word_count": int(word_count),
     }
+
+
+def _length_score_from_word_count(wc: int) -> float:
+    """
+    Map bayt word count to a soft score in [0, 1].
+
+    Based on dataset stats:
+    - typical bayt word-length: mean ≈ 4.9, p90 ≈ 6
+    -> we treat 3–8 as the "sweet spot".
+    """
+    if wc <= 0:
+        return 0.0
+    if 3 <= wc <= 8:
+        return 1.0
+    if wc == 2 or 9 <= wc <= 10:
+        return 0.7
+    if wc == 1 or 11 <= wc <= 12:
+        return 0.4
+    # way too short or too long → strongly penalize
+    return 0.2
 
 
 def _score_form(text: str) -> float:
@@ -225,12 +243,14 @@ def _score_form(text: str) -> float:
     # Mix in balance (how close in length صدر vs. عجز)
     balance = stats["balance_score"]
     arabic_density = stats["arabic_density"]
+    length_score = _length_score_from_word_count(stats["word_count"])
 
-    # Weighted combination
+    # Weighted combination (weights sum to 1.0)
     score = (
-        0.6 * base
+        0.45 * base
         + 0.25 * balance
         + 0.15 * arabic_density
+        + 0.15 * length_score
     )
 
     # Clip
@@ -248,7 +268,7 @@ def form_reward(
     prompts: Iterable[Any] | None = None,
     trainer_state=None,
     **kwargs,
-) -> list[float]:
+) -> List[float]:
     """
     Form reward for GRPO.
 
@@ -260,7 +280,7 @@ def form_reward(
     Output:
       - list[float] in [0, 1], one per completion
     """
-    scores: list[float] = []
+    scores: List[float] = []
 
     for completion in completions or []:
         text = _extract_text_from_completion(completion)
