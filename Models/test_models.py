@@ -37,7 +37,8 @@ def openai_chat(client: OpenAI, model: str) -> str:
         messages=messages,
         max_tokens=64,
         temperature=0.7,
-        timeout=30,
+        # OpenAI-compatible RunPod calls can be slow; allow ample time.
+        timeout=180,
     )
     return resp.choices[0].message.content
 
@@ -69,7 +70,8 @@ def runpod_runsync(endpoint_id: str, api_key: str) -> str:
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json",
     }
-    resp = requests.post(url, json=payload, headers=headers, timeout=90)
+    # End-to-end can take ~1–2 minutes; allow a generous timeout.
+    resp = requests.post(url, json=payload, headers=headers, timeout=180)
     resp.raise_for_status()
     data = resp.json()
     output = data.get("output") or []
