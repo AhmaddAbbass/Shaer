@@ -25,9 +25,6 @@ hf_exports/
 *.local/
 Label_DATA/.env
 
-models/grpo_full_v1
-models/grpo_mini_v1
-
 # Heavy runtime artifacts
 RAG/artifacts/neo4j/
 RAG/artifacts/chroma/
