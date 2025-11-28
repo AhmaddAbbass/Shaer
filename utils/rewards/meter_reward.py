@@ -28,11 +28,35 @@ from .form_reward import _extract_text_from_completion
 # ---------------------------------------------------------------------------
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-# Use lowercase paths to match repo layout.
-ASHAAR_RUNTIME_DIR = PROJECT_ROOT / "models" / "Ashaar_runtime"
-TRAINING_DIR = ASHAAR_RUNTIME_DIR / "bilstm_model" / "training"
 
-_DEFAULT_BILSTM_MODEL_PATH = ASHAAR_RUNTIME_DIR / "bilstm_model" / "poem_meter_bilstm_v2.h5"
+
+def _resolve_ashaar_runtime_dir() -> Path:
+    candidates = [
+        PROJECT_ROOT / "models" / "Ashaar_runtime",
+        PROJECT_ROOT / "Models" / "Ashaar_runtime",
+    ]
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+    return candidates[0]
+
+
+def _resolve_bilstm_dir(runtime_dir: Path) -> Path:
+    candidates = [
+        runtime_dir / "bilstm_only" / "bilstm_model",
+        runtime_dir / "bilstm_model",
+    ]
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+    return candidates[0]
+
+
+ASHAAR_RUNTIME_DIR = _resolve_ashaar_runtime_dir()
+BILSTM_DIR = _resolve_bilstm_dir(ASHAAR_RUNTIME_DIR)
+TRAINING_DIR = BILSTM_DIR / "training"
+
+_DEFAULT_BILSTM_MODEL_PATH = BILSTM_DIR / "poem_meter_bilstm_v2.h5"
 _DEFAULT_LABEL_ENCODER_PATH = TRAINING_DIR / "meter_label_encoder.joblib"
 _DEFAULT_VOCAB_CONFIG_PATH = TRAINING_DIR / "bilstm_vocab_config.json"
 

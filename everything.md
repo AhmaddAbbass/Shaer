@@ -74,7 +74,7 @@ This document fuses the vision in `project.md` with what is actually implemented
   - Endpoint `POST /score_batch` accepts items with verse, description, optional previous_verses; builds chat prompts and parses 0–10 score from generation.
   - Uses deterministic sampling (temperature 0) and retries GPU init with adjusted utilization on OOM.
 - `models/how_to_run_models.py`: CLI to test RunPod OpenAI-compatible endpoints for Shaer/Yehia or fall back to RunPod `/runsync`.
-- `models/Ashaar_runtime`: contains diacritizer code, meter reward LSTM, configs, pretrained weights (bilstm, embeddings, classification models), and a poetry diacritizer package (Tacotron/GPT/Seq2Seq variants).
+- `models/Ashaar_runtime`: now split into `bilstm_only/` (BiLSTM classifier assets + reward helpers) and `ashaar_only/` (Ashaar structural analysis stack, diacritizer code, configs, pretrained weights).
 
 ## 7) Utils
 - `utils/data/data_view.py`: EDA script for the older Ashaar dataset; prints distribution stats and example rows (contains a placeholder HF token to replace).

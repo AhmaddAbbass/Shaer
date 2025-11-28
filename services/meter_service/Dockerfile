@@ -22,7 +22,7 @@ RUN pip install --no-cache-dir --upgrade pip && \
 # Copy code and assets
 COPY services/common_schemas ./services/common_schemas
 COPY utils ./utils
-COPY models/Ashaar_runtime/bilstm_model ./models/Ashaar_runtime/bilstm_model
+COPY Models/Ashaar_runtime/bilstm_only/bilstm_model ./models/Ashaar_runtime/bilstm_only/bilstm_model
 COPY services/meter_service ./services/meter_service
 
 ENV PYTHONPATH=/app

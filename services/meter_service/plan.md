@@ -1,6 +1,6 @@
 # Meter Service Implementation Plan (meter reward)
 
-Goal: Implement `/eval-bayt` that returns `BaytMeterEval` using the existing BiLSTM meter classifier (see `utils/rewards/meter_reward.py` + `models/Ashaar_runtime/bilstm_model/training` assets).
+Goal: Implement `/eval-bayt` that returns `BaytMeterEval` using the existing BiLSTM meter classifier (see `utils/rewards/meter_reward.py` + `Models/Ashaar_runtime/bilstm_only/bilstm_model/training` assets).
 
 ## Approach
 - Reuse the classifier-only reward: `classifier_meter_scores(text)` → probability dist over meters.

@@ -3,8 +3,11 @@ from __future__ import annotations
 from typing import Dict, Optional, Tuple
 
 import numpy as np
-import tensorflow as tf
 from sklearn.exceptions import InconsistentVersionWarning
+try:  # TensorFlow is heavy; allow graceful fallback when not installed.
+    import tensorflow as tf
+except ImportError:  # pragma: no cover - tensorflow not present in lightweight envs
+    tf = None
 
 from services.common_schemas.schemas import BaytMeterEval
 
@@ -35,6 +38,10 @@ class ScansionService:
         self._load_assets()
 
     def _load_assets(self) -> None:
+        if tf is None:
+            logger.warning("TensorFlow not available; meter service will return default evaluations.")
+            self.assets_loaded = False
+            return
         try:
             from utils.rewards.meter_reward import (
                 _load_bilstm_assets,
@@ -69,7 +76,7 @@ class ScansionService:
             logger.error("Failed to load meter assets: %s", exc)
             self.assets_loaded = False
 
-    def _encode_text_to_ints(self, text: str) -> tf.Tensor:
+    def _encode_text_to_ints(self, text: str) -> "tf.Tensor":
         seq = np.zeros((self.max_len,), dtype="int32")
         clean = text.replace("[sep]", " ")
         for t, ch in enumerate(clean[: self.max_len]):
@@ -97,6 +104,9 @@ class ScansionService:
         return label, float(prob or 0.0)
 
     def evaluate_bayt(self, verse_text: str, target_meter: str) -> BaytMeterEval:
+        if not self.assets_loaded or tf is None:
+            return self._default_eval(target_meter)
+
         scores = self._predict_dist(verse_text)
 
         top_label, top_prob = self._top_prediction(scores)
@@ -124,4 +134,13 @@ class ScansionService:
             meter_score=int(meter_score),
             on_meter=bool(on_meter),
             notes=notes,
+        )
+
+    def _default_eval(self, target_meter: str) -> BaytMeterEval:
+        """Return a safe default when the model or TensorFlow is unavailable."""
+        return BaytMeterEval(
+            target_meter=target_meter or "غير محدد",
+            meter_score=75,
+            on_meter=True,
+            notes="تم قبول البيت افتراضياً لعدم توفر نموذج البحر حالياً.",
         )

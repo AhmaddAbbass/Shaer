@@ -20,17 +20,18 @@ class Settings(BaseSettings):
             Path(__file__).resolve().parents[3]
             / "models"
             / "Ashaar_runtime"
+            / "bilstm_only"
             / "bilstm_model"
             / "poem_meter_bilstm_v2.h5"
         ),
         description="Path to the saved BiLSTM meter model (H5 or SavedModel dir)",
     )
     meter_label_encoder_path: str = Field(
-        default=str(Path(__file__).resolve().parents[3] / "models" / "Ashaar_runtime" / "bilstm_model" / "training" / "meter_label_encoder.joblib"),
+        default=str(Path(__file__).resolve().parents[3] / "models" / "Ashaar_runtime" / "bilstm_only" / "bilstm_model" / "training" / "meter_label_encoder.joblib"),
         description="Path to the label encoder joblib file",
     )
     meter_vocab_config_path: str = Field(
-        default=str(Path(__file__).resolve().parents[3] / "models" / "Ashaar_runtime" / "bilstm_model" / "training" / "bilstm_vocab_config.json"),
+        default=str(Path(__file__).resolve().parents[3] / "models" / "Ashaar_runtime" / "bilstm_only" / "bilstm_model" / "training" / "bilstm_vocab_config.json"),
         description="Path to the vocab config JSON used by the BiLSTM",
     )
 

@@ -104,7 +104,7 @@ In `services/meter_service/.env`:
     * `BILSTM_VOCAB_CONFIG_PATH`
 
     If not set, we fall back to the defaults in your snippet:
-    `"Models/Ashaar_runtime/bilstm_model/training/..."`.
+    `"Models/Ashaar_runtime/bilstm_only/bilstm_model/training/..."`.
 
 * Scoring logic:
 
@@ -184,7 +184,7 @@ Now let’s re-spec **how `scansion.evaluate_bayt` works** given your BiLSTM uti
 
   * Imports `classifier_meter_scores` from your existing module, e.g.:
 
-    > (`Models.Ashaar_runtime.bilstm_model.meter_utils` or wherever you put this snippet).
+    > (`Models.Ashaar_runtime.bilstm_only.bilstm_model.meter_utils` or wherever you put this snippet).
 
   * Relies on that module’s global lazy loading:
 

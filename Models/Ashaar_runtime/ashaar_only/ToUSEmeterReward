@@ -1,0 +1,13 @@
+cd C:\Users\Lenovo\OneDrive\Desktop\Shaaer1\Shaer\Models\Ashaar_runtime\ashaar_only
+
+@'
+import sys
+
+sys.stdout.reconfigure(encoding="utf-8")
+from reward import AshaarRewardConfig, ashaar_reward
+
+text = "عرفتَ منازلَ أهلها فصَبت لهم واقتادها شجوٌ وطولُ شجونِ"
+cfg = AshaarRewardConfig(ashaar_weight=1.0)
+res = ashaar_reward(text, config=cfg)
+print(res)
+'@ | C:\Users\Lenovo\OneDrive\Desktop\Shaaer1\.venv\Scripts\python.exe -

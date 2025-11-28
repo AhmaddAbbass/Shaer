@@ -27,7 +27,7 @@ def main():
         DummyDTypePolicy
     )
 
-    src = "models/Ashaar_runtime/bilstm_model/training/poem_meter_bilstm.keras"
+    src = "Models/Ashaar_runtime/bilstm_only/bilstm_model/training/poem_meter_bilstm.keras"
     if not os.path.exists(src):
         print(f"Source model not found at: {src}")
         sys.exit(1)
@@ -40,7 +40,7 @@ def main():
         print("Failed to load via keras.saving.load_model:", repr(e))
         sys.exit(1)
 
-    out_dir = "models/Ashaar_runtime/bilstm_model"
+    out_dir = "Models/Ashaar_runtime/bilstm_only/bilstm_model"
     os.makedirs(out_dir, exist_ok=True)
 
     # 2) Save to H5
