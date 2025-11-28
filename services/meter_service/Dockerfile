@@ -6,7 +6,7 @@ ENV KERAS_BACKEND=tensorflow
 
 WORKDIR /app
 
-# Install Python deps (minimal set needed for meter service)
+# Install Python deps (minimal set needed for meter checking service)
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir \
         fastapi \

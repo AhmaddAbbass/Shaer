@@ -1,6 +1,8 @@
 Aha perfect, this changes the game in a *nice* way 😌
 Now meter_service doesn’t need some abstract “mystery scansion model” – it can **wrap this exact BiLSTM classifier**.
 
+> **Note:** The implementation now lives under `services/meter_service/`. Paths below referencing that package are accurate.
+
 Let me rewrite the **meter_service spec** assuming:
 
 * You already have this BiLSTM code living somewhere like `Models/Ashaar_runtime/...`.

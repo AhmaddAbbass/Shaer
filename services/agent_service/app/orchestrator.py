@@ -10,6 +10,7 @@ from .agents import ExplainAgent, LibraryAgent, PoetryAgent, PoetryResult, Trace
 from .clients import MeterServiceClient, RagServiceClient, ShaerServiceClient, YehiaServiceClient
 from .config import Settings
 from .schemas import ChatMessage, ChatRequest, ChatResponse, LibraryItem, PoemVersion
+from .tool_selector import ToolSelector, ToolSelectionResult
 
 ALLOWED_MODES = {"generate", "fix", "search", "explain"}
 
@@ -32,6 +33,11 @@ class OrchestratorService:
         self.poetry_agent = PoetryAgent(settings, rag_client, yehia_client, shaer_client, meter_client)
         self.library_agent = LibraryAgent(rag_client)
         self.explain_agent = ExplainAgent(settings, yehia_client)
+        self.tool_selector = (
+            ToolSelector(settings.openai_api_key, settings.openai_model, settings.tool_selection_system_prompt)
+            if settings.openai_api_key
+            else None
+        )
 
     async def handle_chat(self, request: ChatRequest) -> ChatResponse:
         latest_user = self._latest_user_message(request.messages)
@@ -39,7 +45,15 @@ class OrchestratorService:
             raise HTTPException(status_code=400, detail="يجب أن تحتوي المحادثة على رسالة مستخدم واحدة على الأقل.")
 
         trace = TraceRecorder()
-        mode = self._infer_mode(request.mode, latest_user)
+        selection, selection_error = await self._select_mode_via_llm(latest_user)
+        if selection:
+            mode = selection.mode
+            reason = f" – {selection.reason}" if selection.reason else ""
+            trace.add("Orchestrator", "gpt_mode_selector", f"GPT-4o اختار الأداة: {mode}{reason}")
+        else:
+            mode = self._infer_mode(request.mode, latest_user)
+            if selection_error:
+                trace.add("Orchestrator", "gpt_mode_selector", selection_error)
         trace.add("Orchestrator", "parse_intent", f"تم تحديد نية المستخدم: {mode}.")
 
         warnings: List[str] = []
@@ -130,3 +144,16 @@ class OrchestratorService:
         await self.shaer_client.close()
         await self.rag_client.close()
         await self.meter_client.close()
+
+    async def _select_mode_via_llm(
+        self, message: ChatMessage
+    ) -> tuple[Optional[ToolSelectionResult], Optional[str]]:
+        if not self.tool_selector or not message.content.strip():
+            return None, None
+        try:
+            result = await self.tool_selector.select_mode(message.content, ALLOWED_MODES)
+        except Exception:
+            return None, "تعذر الاتصال بـ GPT-4o لاختيار الأداة، سيتم استخدام الاستدلال المحلي."
+        if result is None:
+            return None, "لم نحصل على استجابة مفهومة من GPT-4o، سيتم استخدام الاستدلال المحلي."
+        return result, None

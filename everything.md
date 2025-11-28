@@ -12,7 +12,7 @@ This document fuses the vision in `project.md` with what is actually implemented
 - Services (under `services/`):
   - `common_schemas/`: shared Pydantic models for PoemSpec, Verse, Poem, Rag types, BaytMeterEval, YehiaFeedback, LLMMessage.
   - `rag_service/`: fully implemented FastAPI over Neo4j + Chroma (see section 4).
-  - `shaer_client/`, `yehia_client/`, `meter_service/`: scaffolds only; files are empty today aside from tests/docs describing the intended APIs.
+  - `shaer_client/`, `yehia_client/`, `meter_service/`, `ashaar_meter_service/`: scaffolds/docs outlining intended APIs (meter service now implemented, ashaar service newly added).
   - `services.md`: design notes for all services and how they should behave.
 - Data/RAG stack (`RAG/`): complete pipeline to clean HF dataset, load Neo4j graph, build Chroma vectors. Includes docs (`RAG/README.md`, `rag.md`, `repo.md`), scripts, tests.
 - Models (`models/`):
@@ -65,7 +65,8 @@ This document fuses the vision in `project.md` with what is actually implemented
 - `services/common_schemas`: fully defined shared models; service-level schemas should compose these.
 - `services/shaer_client`: intended to build exact SFT-style prompt and call Shaer RunPod; endpoints `/generate-bayt` (and optional `/generate-poem`). Files are empty today; tests outline expected behavior.
 - `services/yehia_client`: intended to expose `/chat`, `/build-spec`, `/feedback` using Yehia prompts and RunPod. Files empty; tests/docs describe target shapes.
-- `services/meter_service`: intended to expose `/eval-bayt` wrapping scansion model; files empty.
+- `services/meter_service`: BiLSTM-based `/eval-bayt` implementation (now populated).
+- `services/ashaar_meter_service`: Ashaar structural scoring service (new).
 - `services/services.md` documents the design, env vars, and docker-compose expectations for all services.
 
 ## 6) Models and Evaluation
