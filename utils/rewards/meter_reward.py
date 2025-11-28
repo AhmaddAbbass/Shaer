@@ -141,12 +141,39 @@ def _load_bilstm_assets(
     vocab_config_path = Path(vocab_config_path)
 
     custom_objects = {"InputLayer": LegacyInputLayer}
-    # Handle dtype policy from newer Keras exports if present
+    # Handle dtype policy from newer/older Keras exports.
     try:
         from tensorflow.keras.mixed_precision import policy as mp_policy  # type: ignore
-        custom_objects["DTypePolicy"] = mp_policy.Policy  # type: ignore[attr-defined]
+
+        class DummyDTypePolicy:
+            """
+            Compatibility shim for legacy configs that serialize 'DTypePolicy'.
+            We ignore the policy details and just store the name.
+            """
+
+            def __init__(self, name="float32", **kwargs):
+                self.name = name
+                # Match minimal interface used by layers during build.
+                self.compute_dtype = name
+                self.variable_dtype = name
+
+            def get_config(self):
+                return {"name": self.name}
+
+        # Prefer the actual Policy class if available; otherwise use dummy.
+        custom_objects["DTypePolicy"] = getattr(mp_policy, "Policy", DummyDTypePolicy)  # type: ignore[attr-defined]
     except Exception:
-        pass
+        # Fall back to a dummy policy if mixed_precision is missing entirely.
+        class DummyDTypePolicy:
+            def __init__(self, name="float32", **kwargs):
+                self.name = name
+                self.compute_dtype = name
+                self.variable_dtype = name
+
+            def get_config(self):
+                return {"name": self.name}
+
+        custom_objects["DTypePolicy"] = DummyDTypePolicy
 
     _BILSTM_MODEL = tf.keras.models.load_model(
         str(model_path),

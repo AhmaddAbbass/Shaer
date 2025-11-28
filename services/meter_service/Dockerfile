@@ -2,6 +2,8 @@ FROM python:3.11-slim
 
 ENV PYTHONUNBUFFERED=1
 
+ENV KERAS_BACKEND=tensorflow
+
 WORKDIR /app
 
 # Install Python deps (minimal set needed for meter service)
@@ -11,7 +13,7 @@ RUN pip install --no-cache-dir --upgrade pip && \
         uvicorn \
         pydantic \
         pydantic-settings \
-        "tensorflow-cpu==2.12.0" \
+        "tensorflow-cpu==2.20.0" \
         scikit-learn \
         numpy \
         joblib \

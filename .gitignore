@@ -7,6 +7,13 @@ __pycache__/
 *.egg-info/
 .ipynb_checkpoints/
 
+.venv-*
+
+frontend/
+
+error.md
+
+artifacts
 .env
 # data & outputs
 .pytest_cache/
