@@ -4,7 +4,8 @@
 3. `services/yehia_client`
 4. `services/rag_service`
 5. `services/meter_service`
-6. Root-level `docker-compose.yml` + basic tests.
+6. `services/ashaar_meter_service`
+7. Root-level `docker-compose.yml` + basic tests.
 
 ---
 
@@ -332,78 +333,38 @@ Offer clean endpoints over Neo4j + Chroma:
 
 ---
 
-## 5. `services/meter_service/` – bayt meter checker
+## 5. Meter services – bayt meter + Ashaar checks
 
-**High-level role:**
-Given `verse_text` + `target_meter`, return `BaytMeterEval`.
+We now expose two focused services:
+
+1. `services/meter_service/` – wraps the BiLSTM classifier (keras/tf) to return `BaytMeterEval`.
+2. `services/ashaar_meter_service/` – wraps Ashaar structural scoring to return float similarity scores + notes.
+
+### 5.1 `services/meter_service/`
+
+**High-level role:** Given `verse_text` + `target_meter`, return `BaytMeterEval`.
 
 ### Files & responsibilities
 
 * `app/__init__.py`
+* `app/main.py` – create app, load scansion assets on startup, expose `/health`.
+* `app/api.py` – `POST /eval-bayt` returning `BaytMeterEval`.
+* `app/schemas.py` – HTTP request/response wrappers using `BaytMeterEval`.
+* `app/scansion.py` – loads BiLSTM assets, scores, and produces notes.
+* `app/config.py` – env paths to BiLSTM weights, score threshold, log level.
+* `app/logging.py` – common logging helpers.
+* `tests/test_eval_bayt.py`, `tests/test_scansion.py`.
+* `Dockerfile` + `README.md`.
 
-* `app/main.py`
+### 5.2 `services/ashaar_meter_service/`
 
-  * Create app, optionally load scansion model on startup.
-  * `GET /health` should confirm the model is loaded.
+**High-level role:** Given `verse_text`, return Ashaar structural similarity metrics.
 
-* `app/api.py`
-
-  * Single main endpoint:
-
-    * `POST /eval-bayt`
-
-      * Input: `verse_text`, `target_meter`.
-      * Output: `BaytMeterEval` (score, on_meter, notes).
-  * Flow:
-
-    * Parse JSON from `schemas.py`.
-    * Call `scansion.py`.
-    * Map scansion raw output → `BaytMeterEval`.
-
-* `app/schemas.py`
-
-  * HTTP-level models:
-
-    * `EvalBaytRequest` (verse_text, target_meter).
-    * `EvalBaytResponse` ({ `result: BaytMeterEval` }).
-
-* `app/scansion.py`
-
-  * Wraps the actual meter model(s).
-  * Responsibilities:
-
-    * Load model (local or remote).
-    * Provide a function like `evaluate_bayt(text, target_meter)` that returns raw metrics (distances, scores).
-    * Convert raw metrics to:
-
-      * integer `meter_score` (0–100),
-      * `on_meter` boolean based on threshold from env,
-      * text notes.
-
-* `app/config.py`
-
-  * Reads:
-
-    * `METER_MODEL_PATH` or `METER_API_BASE`
-    * `METER_SCORE_THRESHOLD` (e.g. 80)
-    * `METER_TIMEOUT_SECONDS`
-    * `METER_LOG_LEVEL`
-
-* `app/logging.py`
-
-  * Standard logging.
-
-* `tests/test_eval_bayt.py`
-
-  * Minimal tests:
-
-    * When input is perfect example, `on_meter` should be True.
-    * When input is clear nonsense, `on_meter` False.
-
-* `Dockerfile` + `README.md`
-
-  * Docker: install whatever deps the scansion model needs.
-  * README: expected env vars, example request/response.
+* `app/main.py`, `app/api.py`, `app/schemas.py` – expose `/ashaar-score`.
+* `app/ashaar.py` – wraps `Models.Ashaar_runtime.ashaar_only.reward`.
+* `app/config.py` – optional knobs (weights, log level).
+* `tests/test_ashaar.py` – ensure scoring pipeline works with dummy BaitAnalysis.
+* Dockerfile installs Ashaar deps (PyTorch optional) plus FastAPI.
 
 ---
 
@@ -411,7 +372,7 @@ Given `verse_text` + `target_meter`, return `BaytMeterEval`.
 
 ### 6.1. Dockerfiles (per service)
 
-For each service (yehia_client, shaer_client, rag_service, meter_service):
+For each service (yehia_client, shaer_client, rag_service, meter_service, ashaar_meter_service):
 
 * Use similar pattern:
 
@@ -436,6 +397,7 @@ At project root, create a compose file that:
   * `yehia_client`
   * `shaer_client`
   * `meter_service`
+  * `ashaar_meter_service`
 * Sets env for each service using either:
 
   * `env_file: ./services/<name>/.env`
@@ -458,6 +420,8 @@ So you can access:
 * `http://localhost:8001` → Yehia
 * `http://localhost:8002` → Shaer
 * `http://localhost:8003` → RAG
+* `http://localhost:8004` → Meter
+* `http://localhost:8005` → Ashaar Meter
 * `http://localhost:8004` → Meter
 
 ### 6.3. How to run
@@ -487,6 +451,7 @@ docker ps
 * `curl http://localhost:8002/health` → Shaer
 * `curl http://localhost:8003/health` → RAG
 * `curl http://localhost:8004/health` → Meter
+* `curl http://localhost:8005/health` → Ashaar Meter
 
 If all respond OK, you’re good.
 
@@ -499,6 +464,7 @@ If all respond OK, you’re good.
   pytest services/shaer_client/tests
   pytest services/rag_service/tests
   pytest services/meter_service/tests
+  pytest services/ashaar_meter_service/tests
   ```
 
 * **Manual HTTP tests** (Postman / curl):
@@ -507,5 +473,6 @@ If all respond OK, you’re good.
   * Use its result to call `/build-spec` on `yehia_client`.
   * Take the spec and call `/generate-bayt` on `shaer_client`.
   * Send the generated bayt + `spec.poem_meter` to `/eval-bayt` on `meter_service`.
+  * Optionally call `/ashaar-score` on `ashaar_meter_service` for structural similarity.
 
 This “manual chain” is exactly what your future orchestrator agent will do automatically.

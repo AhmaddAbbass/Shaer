@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from functools import lru_cache
-from typing import Literal
+from typing import Literal, Optional
 
 from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -34,6 +34,16 @@ class Settings(BaseSettings):
         default=(
             "أنت يحيى، معلم شعر عربي يساعد المستخدم على فهم المفاهيم العروضية "
             "وشرح الأبيات بأسلوب واضح ومختصر مع أمثلة عند الحاجة."
+        )
+    )
+    openai_api_key: Optional[str] = Field(default=None, description="API key used to call GPT-4o for tool selection")
+    openai_model: str = Field(default="gpt-4o-mini", description="OpenAI model used for intent/tool selection")
+    tool_selection_system_prompt: str = Field(
+        default=(
+            "أنت منسق مهام لشاعر آلي. أمامك أدوات داخلية يمكن استخدامها: generate (لإنشاء قصيدة جديدة)، "
+            "fix (لإصلاح أبيات موجودة)، search (لعرض قصائد من المكتبة)، explain (للإجابة عن أسئلة نظرية). "
+            "اقرأ رسالة المستخدم وحدد أفضل أداة واحدة فقط، ثم أعد JSON على شكل "
+            '{"mode": "generate", "reason": "لماذا اخترت الأداة"} بالاعتماد على نيته.'
         )
     )
 

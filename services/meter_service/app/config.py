@@ -9,7 +9,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     """
-    Configuration for meter_service.
+    Configuration for the meter_service (BiLSTM-based meter checking).
     Paths default to the BiLSTM assets under models/Ashaar_runtime.
     """
 

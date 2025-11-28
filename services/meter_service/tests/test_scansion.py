@@ -22,6 +22,9 @@ class DummyEncoder:
 
 @pytest.fixture
 def fake_scansion(monkeypatch):
+    fake_tf = types.SimpleNamespace(convert_to_tensor=lambda arr, dtype=None: arr, int32=None)
+    monkeypatch.setattr("services.meter_service.app.scansion.tf", fake_tf, raising=False)
+
     settings = Settings(
         meter_model_path="dummy.h5",
         meter_label_encoder_path="dummy.joblib",

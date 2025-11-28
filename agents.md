@@ -1,5 +1,5 @@
 Here’s a full agents.md you can drop into the repo and hand to your teammate.
-It assumes all 4 services are already working (yehia_service, shaer_service, rag_service, meter_service) and focuses only on the agent logic that sits on top.
+It assumes all core services are already working (yehia_service, shaer_service, rag_service, meter_service, ashaar_meter_service) and focuses only on the agent logic that sits on top.
 
 Shaer Agents Design
 
@@ -17,7 +17,8 @@ shaer_service – Shaer-7B poetry generator (bayt-by-bayt).
 
 rag_service – Neo4j + Chroma poetry RAG.
 
-meter_service – bayt-level scansion (meter classifier).
+meter_service – bayt-level scansion (meter classifier).  
+ashaar_meter_service – structural similarity score (optional).
 
 All agents exchange typed objects defined in services/common_schemas/schemas.py (PoemSpec, PoemVersion, AgentStep, LibraryItem, MeterEvalResult, etc.).
 
@@ -611,7 +612,7 @@ explain/other: call ExplainAgent.explain_flow.
 
 Each called agent:
 
-uses working microservices (yehia_service, shaer_service, rag_service, meter_service),
+uses working microservices (yehia_service, shaer_service, rag_service, meter_service, ashaar_meter_service),
 
 appends its own AgentSteps,
 
@@ -674,7 +675,7 @@ ChatGPT orchestrator logic:
    - Append to PoemVersion and context.  
    - Emit `AgentStep(tool="compose_bayt")`.
 6. **Feedback stage**  
-   - For every generated bayt: call `meter_service.eval_bayt`. If meter service fails, mark `on_meter=false`, set `predicted_meter="default"`, and continue (meter defaults).  
+   - For every generated bayt: call `meter_service.eval_bayt`. If the meter check fails, mark `on_meter=false`, set `predicted_meter="default"`, and continue (meter defaults).  
    - Optional semantic/style feedback via Yehia.  
    - Aggregate into EvalScores.
 7. **Enhancement loop (≤3 tries)**  

@@ -64,7 +64,7 @@ class ScansionService:
             if self.model is None or self.label_encoder is None or not self.stoi or self.max_len <= 0:
                 raise RuntimeError("Model assets not fully loaded")
             self.assets_loaded = True
-            logger.info("Meter assets loaded")
+            logger.info("Check meter assets loaded")
         except FileNotFoundError as exc:
             logger.error(
                 "Meter model file not found at %s. Run scripts/convert_meter_model.py and rebuild the image. (%s)",

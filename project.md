@@ -300,21 +300,29 @@ This service is the **library**: everything about retrieving, ranking, and inspe
 
 ---
 
-## 3.5 Meter Service (`services/meter_service/`)
+## 3.5 Meter Services (`services/meter_service/` + `services/ashaar_meter_service/`)
 
 **Purpose:**
-Evaluate **one bayt at a time** for meter correctness.
+Provide bayt-level feedback via two focused services:
+
+1. `meter_service`: wraps the BiLSTM classifier (keras/tf) to score whether a bayt matches a target meter (`BaytMeterEval` response).
+2. `ashaar_meter_service`: wraps Ashaar's structural analysis to report similarity scores (0–1) for any bayt irrespective of the classifier.
 
 ### Endpoint
 
-* `POST /eval-bayt`
+* `meter_service`: `POST /eval-bayt`
 
   * Input: `{ verse_text: str, target_meter: str }`
   * Output: `{ result: BaytMeterEval }`
 
+* `ashaar_meter_service`: `POST /ashaar-score`
+
+  * Input: `{ verse_text: str }`
+  * Output: `{ score: float, notes: str }`
+
 ### Internals
 
-* `scansion.py`:
+* `meter_service/app/scansion.py`:
 
   * Wraps the underlying scansion model(s).
   * Interprets the model’s raw outputs.
@@ -324,7 +332,13 @@ Evaluate **one bayt at a time** for meter correctness.
     * `on_meter` (bool, based on some threshold),
     * `notes`.
 
-This service is what the **Enhancer agent** uses to decide “regenerate this bayt or not”.
+* `ashaar_meter_service/app/ashaar.py`:
+
+  * Wraps Ashaar’s `BaitAnalysis`.
+  * Normalizes `[sep]` verses and calls `ashaar_meter_pattern_score`.
+  * Returns normalized float scores and short notes.
+
+Together these services tell the **Enhancer agent** whether to regenerate a bayt and how far it drifted structurally.
 
 ---
 
@@ -379,7 +393,7 @@ Conceptually you have these **agent roles** (even if they’re not separate phys
 
      * Given a generated or user-provided bayt, it:
 
-       * calls `meter_service.eval_bayt` (meter check),
+      * calls `meter_service.eval_bayt` (meter check),
        * calls `yehia_client.feedback` (semantic/style check).
      * Decides:
 
@@ -448,7 +462,7 @@ Example:
 4. **Meter + semantic check per bayt**
    For each bayt:
 
-   * Orchestrator calls `meter_service.eval_bayt` with `verse_i.text`, `spec.poem_meter`.
+  * Orchestrator calls `meter_service.eval_bayt` with `verse_i.text`, `spec.poem_meter`.
    * Orchestrator may call `yehia_client.feedback` with `verse_i.text`, `spec`.
    * If either:
 
@@ -484,11 +498,11 @@ Example:
 2. Orchestrator either:
 
    * **Infers a spec** for the poem using `yehia_client.build-spec` (on the whole poem or the user description).
-   * Or asks `yehia_client.feedback` + `meter_service.eval_bayt` on each bayt to identify which ones are broken.
+  * Or asks `yehia_client.feedback` + `meter_service.eval_bayt` on each bayt to identify which ones are broken.
 
 3. For each problematic bayt:
 
-   * call `meter_service.eval_bayt` → see meter issues.
+  * call `meter_service.eval_bayt` → see meter issues.
    * call `yehia_client.feedback` → get textual critique.
 
 4. Then the orchestrator uses `shaer_client.generate_bayt` to **regenerate only the broken bayts**:

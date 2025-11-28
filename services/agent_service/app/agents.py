@@ -170,6 +170,7 @@ class PoetryAgent:
             attempt += 1
             try:
                 verse_text = await self.shaer_client.generate_bayt(spec, sequence_number, previous_verses)
+                verse_text = self._clean_verse_text(verse_text)
             except Exception:
                 warnings.append("تعذر الاتصال بخدمة شاعر، سيتم استخدام نص بديل بسيط.")
                 verse_text = "" if attempt < self.settings.max_bayt_retries else "قصيدة مؤقتة بلا وزن واضح."
@@ -237,6 +238,20 @@ class PoetryAgent:
                 )
             )
         return items
+
+    def _clean_verse_text(self, raw_text: str) -> str:
+        """
+        Keep only the main generated bayt and drop any prompt echoes or system markers
+        (e.g. `[INST]`, `<<SYS>>`, user instructions) that Shaer might emit when it
+        returns the full conversation transcript.
+        """
+        text = raw_text.replace("\r", "\n")
+        for marker in ("[INST]", "<<SYS>>", "<</SYS>>", "المطلوب منك"):
+            marker_idx = text.find(marker)
+            if marker_idx != -1:
+                text = text[:marker_idx]
+        lines = [line.strip() for line in text.splitlines() if line.strip()]
+        return lines[0] if lines else raw_text.strip()
 
 
 class LibraryAgent:

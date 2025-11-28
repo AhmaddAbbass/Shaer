@@ -5,7 +5,8 @@ This package defines the **core data shapes** used across all backend services:
 - `yehia_client`
 - `shaer_client`
 - `rag_service`
-- `meter_service`
+- `meter_service` (BiLSTM meter checks)
+- `ashaar_meter_service` (Ashaar structural scoring)
 - future agents / orchestrator
 
 Having a single source of truth here avoids “stringly-typed JSON” and keeps
@@ -79,7 +80,7 @@ Shaer-7B was trained on.
 
 - **Consumed by**:  
   - `shaer_client` (`/generate-bayt`, `/generate-poem`)  
-  - `meter_service` (uses `poem_meter`)  
+- `meter_service` (uses `poem_meter`)  
   - Orchestrator agent (for reasoning about constraints)  
   - `yehia_client` (`/feedback`) as context when critiquing a bayt.
 
@@ -269,6 +270,7 @@ library’s `ChatCompletionMessage` type.
   - Uses `RagSearchRequest`, `RagSearchResponse`, `RagPoemRecord`.
 
 - **meter_service**
+- **ashaar_meter_service** (reports Ashaar structural similarity scores without target meter).
   - Uses `BaytMeterEval` as the result type for `/eval-bayt`.
 
 - **Orchestrator / Agents**
@@ -292,4 +294,3 @@ library’s `ChatCompletionMessage` type.
 
 - If you find yourself copy-pasting a data structure across services,
   it probably belongs in `common_schemas.schemas`.
-
