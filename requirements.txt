@@ -13,3 +13,7 @@ accelerate
 huggingface_hub
 sentencepiece
 ipykernel
+fastapi>=0.111.0
+uvicorn>=0.30.0
+pydantic>=2.7.0
+pydantic-settings>=2.2.1

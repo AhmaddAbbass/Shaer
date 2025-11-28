@@ -14,6 +14,6 @@ RUN pip install --no-cache-dir --upgrade pip \
 # Copy all services so common_schemas is importable
 COPY services /app/services
 
-EXPOSE 8000
+EXPOSE 8003
 
-CMD ["uvicorn", "services.rag_service.app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "services.rag_service.app.main:app", "--host", "0.0.0.0", "--port", "8003"]

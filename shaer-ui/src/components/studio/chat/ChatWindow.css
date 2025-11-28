@@ -1,0 +1,7 @@
+.chat-window {
+  background: var(--shaer-cream-soft);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}

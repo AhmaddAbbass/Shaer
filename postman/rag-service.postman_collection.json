@@ -1,0 +1,165 @@
+{
+  "info": {
+    "_postman_id": "be8f9e6f-3f7b-4c1e-9c5d-f6c5f3a6e3f0",
+    "name": "Shaer APIs",
+    "description": "Postman collection for Shaer services (RAG, Meter, Shaer, Yehia) with example payloads.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "rag_base_url", "value": "http://localhost:8003" },
+    { "key": "meter_base_url", "value": "http://localhost:8004" },
+    { "key": "shaer_base_url", "value": "http://localhost:8002" },
+    { "key": "yehia_base_url", "value": "http://localhost:8001" },
+    { "key": "query_text", "value": "قصيدة عن الشوق في العصر الأموي" },
+    { "key": "top_k", "value": "5" },
+    { "key": "poem_id", "value": "42" },
+    { "key": "poet_name", "value": "عنترة" },
+    { "key": "meter", "value": "البسيط" },
+    { "key": "era", "value": "العصر الأموي" },
+    { "key": "theme", "value": "الغزل" },
+    { "key": "limit", "value": "20" },
+    { "key": "verse_text", "value": "إني لَعَمركَ مَا أخشَى إِذَا ذُكِرَت" },
+    { "key": "target_meter", "value": "البسيط" },
+    { "key": "poem_meter", "value": "البسيط" },
+    { "key": "poem_description", "value": "قصيدة تتحدث عن الشوق والحب في زمن بعيد" },
+    { "key": "num_verses", "value": "4" },
+    { "key": "sequence_number", "value": "1" },
+    { "key": "poem_era", "value": "العصر الأموي" },
+    { "key": "poet_name_req", "value": "طابع فصيح" }
+  ],
+  "item": [
+    {
+      "name": "rag-service",
+      "item": [
+        { "name": "Health", "request": { "method": "GET", "url": { "raw": "{{rag_base_url}}/health", "host": ["{{rag_base_url}}"], "path": ["health"] } }, "response": [] },
+        {
+          "name": "Search",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{rag_base_url}}/search?text={{query_text}}&top_k={{top_k}}",
+              "host": ["{{rag_base_url}}"],
+              "path": ["search"],
+              "query": [
+                { "key": "text", "value": "{{query_text}}", "description": "Semantic query text" },
+                { "key": "top_k", "value": "{{top_k}}", "description": "Number of hits (1-50)" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Poem by ID",
+          "request": { "method": "GET", "url": { "raw": "{{rag_base_url}}/poem/{{poem_id}}", "host": ["{{rag_base_url}}"], "path": ["poem", "{{poem_id}}"] } },
+          "response": []
+        },
+        {
+          "name": "Filter by Metadata",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{rag_base_url}}/filter?poet_name={{poet_name}}&meter={{meter}}&era={{era}}&theme={{theme}}&limit={{limit}}",
+              "host": ["{{rag_base_url}}"],
+              "path": ["filter"],
+              "query": [
+                { "key": "poet_name", "value": "{{poet_name}}", "description": "Partial match on poet name" },
+                { "key": "meter", "value": "{{meter}}", "description": "Partial match on meter", "disabled": true },
+                { "key": "era", "value": "{{era}}", "description": "Partial match on era", "disabled": true },
+                { "key": "theme", "value": "{{theme}}", "description": "Partial match on theme", "disabled": true },
+                { "key": "limit", "value": "{{limit}}", "description": "Max rows (1-100)" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Similar by Poem ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{rag_base_url}}/similar/{{poem_id}}?top_k={{top_k}}",
+              "host": ["{{rag_base_url}}"],
+              "path": ["similar", "{{poem_id}}"],
+              "query": [{ "key": "top_k", "value": "{{top_k}}", "description": "Number of similar poems (2-50)" }]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "meter-service",
+      "item": [
+        { "name": "Health", "request": { "method": "GET", "url": { "raw": "{{meter_base_url}}/health", "host": ["{{meter_base_url}}"], "path": ["health"] } }, "response": [] },
+        {
+          "name": "Eval Bayt (البسيط sample)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"verse_text\": \"{{verse_text}}\",\n  \"target_meter\": \"{{target_meter}}\"\n}" },
+            "url": { "raw": "{{meter_base_url}}/eval-bayt", "host": ["{{meter_base_url}}"], "path": ["eval-bayt"] }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "shaer-service",
+      "item": [
+        { "name": "Health", "request": { "method": "GET", "url": { "raw": "{{shaer_base_url}}/health", "host": ["{{shaer_base_url}}"], "path": ["health"] } }, "response": [] },
+        {
+          "name": "Generate Bayt",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"poem_meter\": \"{{poem_meter}}\",\n  \"poem_description\": \"{{poem_description}}\",\n  \"num_verses\": {{num_verses}},\n  \"sequence_number\": {{sequence_number}},\n  \"previous_verses\": [],\n  \"poem_era\": \"{{poem_era}}\",\n  \"poet_name\": \"{{poet_name_req}}\"\n}"
+            },
+            "url": { "raw": "{{shaer_base_url}}/generate-bayt", "host": ["{{shaer_base_url}}"], "path": ["generate-bayt"] }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "yehia-service",
+      "item": [
+        { "name": "Health", "request": { "method": "GET", "url": { "raw": "{{yehia_base_url}}/health", "host": ["{{yehia_base_url}}"], "path": ["health"] } }, "response": [] },
+        {
+          "name": "Chat (explain bayt)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"messages\": [\n    { \"role\": \"user\", \"content\": \"اشرح هذا البيت: {{verse_text}}\" }\n  ]\n}" },
+            "url": { "raw": "{{yehia_base_url}}/chat", "host": ["{{yehia_base_url}}"], "path": ["chat"] }
+          },
+          "response": []
+        },
+        {
+          "name": "Build Spec (from query)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"user_query\": \"{{query_text}}\",\n  \"rag_hits\": []\n}" },
+            "url": { "raw": "{{yehia_base_url}}/build-spec", "host": ["{{yehia_base_url}}"], "path": ["build-spec"] }
+          },
+          "response": []
+        },
+        {
+          "name": "Feedback (bayt vs spec)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"verse_text\": \"{{verse_text}}\",\n  \"spec\": {\n    \"poem_meter\": \"{{poem_meter}}\",\n    \"poem_description\": \"{{poem_description}}\",\n    \"num_verses\": 4\n  }\n}"
+            },
+            "url": { "raw": "{{yehia_base_url}}/feedback", "host": ["{{yehia_base_url}}"], "path": ["feedback"] }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

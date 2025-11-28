@@ -28,10 +28,11 @@ from .form_reward import _extract_text_from_completion
 # ---------------------------------------------------------------------------
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-ASHAAR_RUNTIME_DIR = PROJECT_ROOT / "Models" / "Ashaar_runtime"
+# Use lowercase paths to match repo layout.
+ASHAAR_RUNTIME_DIR = PROJECT_ROOT / "models" / "Ashaar_runtime"
 TRAINING_DIR = ASHAAR_RUNTIME_DIR / "bilstm_model" / "training"
 
-_DEFAULT_BILSTM_MODEL_PATH = TRAINING_DIR / "poem_meter_bilstm.keras"
+_DEFAULT_BILSTM_MODEL_PATH = ASHAAR_RUNTIME_DIR / "bilstm_model" / "poem_meter_bilstm_v2.h5"
 _DEFAULT_LABEL_ENCODER_PATH = TRAINING_DIR / "meter_label_encoder.joblib"
 _DEFAULT_VOCAB_CONFIG_PATH = TRAINING_DIR / "bilstm_vocab_config.json"
 
@@ -139,13 +140,20 @@ def _load_bilstm_assets(
     label_encoder_path = Path(label_encoder_path)
     vocab_config_path = Path(vocab_config_path)
 
-    with _patched_policy():
-        _BILSTM_MODEL = tf.keras.models.load_model(
-            str(model_path),
-            compile=False,
-            custom_objects={"InputLayer": LegacyInputLayer},
-            safe_mode=False,  # allow loading legacy layers
-        )
+    custom_objects = {"InputLayer": LegacyInputLayer}
+    # Handle dtype policy from newer Keras exports if present
+    try:
+        from tensorflow.keras.mixed_precision import policy as mp_policy  # type: ignore
+        custom_objects["DTypePolicy"] = mp_policy.Policy  # type: ignore[attr-defined]
+    except Exception:
+        pass
+
+    _BILSTM_MODEL = tf.keras.models.load_model(
+        str(model_path),
+        compile=False,
+        custom_objects=custom_objects,
+        safe_mode=False,  # allow loading legacy layers
+    )
     _LABEL_ENCODER = joblib.load(str(label_encoder_path))
 
     with open(vocab_config_path, "r", encoding="utf-8") as f:

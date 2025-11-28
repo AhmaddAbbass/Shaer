@@ -1,0 +1,17 @@
+:root {
+  --shaer-emerald-dark: #06352b;
+  --shaer-emerald:      #0b4a3c;
+  --shaer-emerald-soft: #0f5c4a;
+
+  --shaer-gold:         #d8b25c;
+  --shaer-gold-soft:    #f1d48a;
+
+  --shaer-cream:        #f8f3e7;
+  --shaer-cream-soft:   #fdf9f0;
+
+  --shaer-charcoal:     #1f2522;
+  --shaer-muted:        #7a847f;
+
+  --shaer-border-radius: 14px;
+  --shaer-shadow-soft:  0 18px 40px rgba(0, 0, 0, 0.15);
+}

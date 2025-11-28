@@ -1,0 +1,17 @@
+# Minimal dependencies to run local utilities (RAG scripts, meter/rag services) without Docker.
+# Use the heavy root requirements.txt for full model work.
+
+fastapi>=0.111.0
+uvicorn>=0.30.0
+pydantic>=2.7.0
+pydantic-settings>=2.2.1
+neo4j>=5.22.0
+chromadb>=0.5.11
+datasets>=3.0.0
+pandas>=2.2.2
+numpy>=1.26.4
+pyarrow>=17.0.0
+tqdm>=4.66.4
+regex>=2024.5.15
+python-dotenv>=1.0.1
+requests>=2.32.3

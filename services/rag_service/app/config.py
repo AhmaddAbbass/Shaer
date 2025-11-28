@@ -71,6 +71,10 @@ class Settings(BaseSettings):
         default="text-embedding-3-small",
         description="Embedding model name used for query embeddings",
     )
+    sentence_embed_model: str = Field(
+        default="intfloat/multilingual-e5-base",
+        description="SentenceTransformer model name to use when OPENAI_API_KEY is not set",
+    )
 
     # Service settings
     log_level: str = Field(default="INFO", description="Logging level")

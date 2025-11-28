@@ -1,0 +1,30 @@
+.final-cta-section {
+  padding: 120px 40px;
+  background: var(--shaer-emerald-dark);
+  text-align: center;
+}
+
+.final-cta-content {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.cta-title {
+  font-size: 48px;
+  color: var(--shaer-cream);
+  margin-bottom: 40px;
+  font-family: 'Noto Naskh Arabic', serif;
+  direction: rtl;
+}
+
+.cta-footer {
+  margin-top: 40px;
+  color: var(--shaer-muted);
+  font-size: 14px;
+}
+
+@media (max-width: 768px) {
+  .cta-title {
+    font-size: 32px;
+  }
+}

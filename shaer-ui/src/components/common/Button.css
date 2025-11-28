@@ -1,0 +1,39 @@
+.shaer-button {
+  padding: 12px 28px;
+  border-radius: var(--shaer-border-radius);
+  font-size: 16px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.shaer-button--primary {
+  background: var(--shaer-gold);
+  color: var(--shaer-emerald);
+  box-shadow: var(--shaer-shadow-soft);
+}
+
+.shaer-button--primary:hover {
+  background: var(--shaer-gold-soft);
+  transform: translateY(-2px);
+}
+
+.shaer-button--secondary {
+  background: transparent;
+  color: var(--shaer-gold);
+  border: 2px solid var(--shaer-gold);
+}
+
+.shaer-button--secondary:hover {
+  background: rgba(216, 178, 92, 0.1);
+}
+
+.shaer-button--ghost {
+  background: transparent;
+  color: var(--shaer-cream);
+  padding: 8px 16px;
+}
+
+.shaer-button--ghost:hover {
+  background: rgba(248, 243, 231, 0.1);
+}

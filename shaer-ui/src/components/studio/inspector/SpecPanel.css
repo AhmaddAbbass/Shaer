@@ -1,0 +1,66 @@
+.spec-panel {
+  animation: fadeIn 0.3s ease;
+}
+
+.spec-empty {
+  color: var(--shaer-muted);
+  font-size: 14px;
+  text-align: center;
+  padding: 40px 20px;
+  font-family: 'Noto Naskh Arabic', serif;
+  direction: rtl;
+}
+
+.spec-card {
+  background: var(--shaer-emerald-soft);
+  border: 1px solid var(--shaer-gold);
+  border-radius: var(--shaer-border-radius);
+  padding: 20px;
+}
+
+.spec-title {
+  color: var(--shaer-gold);
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  font-family: 'Noto Naskh Arabic', serif;
+  direction: rtl;
+}
+
+.spec-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.spec-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.spec-label {
+  color: var(--shaer-gold-soft);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-family: 'Noto Naskh Arabic', serif;
+  direction: rtl;
+}
+
+.spec-value {
+  color: var(--shaer-cream);
+  font-size: 14px;
+  line-height: 1.5;
+  font-family: 'Noto Naskh Arabic', serif;
+  direction: rtl;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

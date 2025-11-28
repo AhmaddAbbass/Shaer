@@ -1,0 +1,631 @@
+{
+  "info": {
+    "_postman_id": "11111111-1111-1111-1111-111111111111",
+    "name": "Smart Meeting Room Backend",
+    "description": "Postman collection for the Smart Meeting Room backend. This version defines the Users service endpoints; Rooms, Bookings and Reviews will be added in later commits.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+  {
+    "key": "users_base_url",
+    "value": "http://localhost:8001"
+  },
+  {
+    "key": "rooms_base_url",
+    "value": "http://localhost:8002"
+  },
+  {
+    "key": "bookings_base_url",
+    "value": "http://localhost:8003"
+  }
+  ],
+  "item": [
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Register user",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Alice Example\",\n  \"username\": \"alice\",\n  \"email\": \"alice@example.com\",\n  \"password\": \"password123\",\n  \"role\": \"regular\"\n}"
+            },
+            "url": {
+              "raw": "{{users_base_url}}/users/register",
+              "host": [
+                "{{users_base_url}}"
+              ],
+              "path": [
+                "users",
+                "register"
+              ]
+            },
+            "description": "Register a new user account."
+          },
+          "response": []
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"alice\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{users_base_url}}/users/login",
+              "host": [
+                "{{users_base_url}}"
+              ],
+              "path": [
+                "users",
+                "login"
+              ]
+            },
+            "description": "Authenticate a user and obtain a JWT access token."
+          },
+          "response": []
+        },
+        {
+          "name": "Get current user (/users/me)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "description": "Replace {{access_token}} with a token returned by the Login request."
+              }
+            ],
+            "url": {
+              "raw": "{{users_base_url}}/users/me",
+              "host": [
+                "{{users_base_url}}"
+              ],
+              "path": [
+                "users",
+                "me"
+              ]
+            },
+            "description": "Return the profile of the currently authenticated user."
+          },
+          "response": []
+        },
+        {
+          "name": "List users (admin only)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}",
+                "description": "JWT for an admin user."
+              }
+            ],
+            "url": {
+              "raw": "{{users_base_url}}/users",
+              "host": [
+                "{{users_base_url}}"
+              ],
+              "path": [
+                "users"
+              ]
+            },
+            "description": "Return all users. Only admins should be allowed to call this endpoint."
+          },
+          "response": []
+        },
+        {
+          "name": "Get user by username (admin only)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{users_base_url}}/users/{{username}}",
+              "host": [
+                "{{users_base_url}}"
+              ],
+              "path": [
+                "users",
+                "{{username}}"
+              ]
+            },
+            "description": "Retrieve a single user by username. Admin-only endpoint."
+          },
+          "response": []
+        },
+        {
+          "name": "Update my profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Alice Updated\",\n  \"email\": \"alice.updated@example.com\"\n}"
+            },
+            "url": {
+              "raw": "{{users_base_url}}/users/me",
+              "host": [
+                "{{users_base_url}}"
+              ],
+              "path": [
+                "users",
+                "me"
+              ]
+            },
+            "description": "Update the profile of the currently authenticated user."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete my account",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{users_base_url}}/users/me",
+              "host": [
+                "{{users_base_url}}"
+              ],
+              "path": [
+                "users",
+                "me"
+              ]
+            },
+            "description": "Delete the currently authenticated user's account."
+          },
+          "response": []
+        },
+        {
+          "name": "Change user role (admin only)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role\": \"moderator\"\n}"
+            },
+            "url": {
+              "raw": "{{users_base_url}}/users/{{user_id}}/role",
+              "host": [
+                "{{users_base_url}}"
+              ],
+              "path": [
+                "users",
+                "{{user_id}}",
+                "role"
+              ]
+            },
+            "description": "Change the role of a specific user. Only admins are allowed to call this endpoint."
+          },
+          "response": []
+        }
+      ]
+    }, 
+    {
+      "name": "Rooms",
+      "item": [
+        {
+          "name": "Create room",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}",
+                "description": "JWT token for an admin or facility manager user."
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Room A\",\n  \"capacity\": 12,\n  \"equipment\": [\"projector\", \"whiteboard\", \"video_conference\"],\n  \"location\": \"Building A - Floor 2\",\n  \"status\": \"active\"\n}"
+            },
+            "url": {
+              "raw": "{{rooms_base_url}}/rooms",
+              "host": [
+                "{{rooms_base_url}}"
+              ],
+              "path": [
+                "rooms"
+              ]
+            },
+            "description": "Create a new meeting room. Only admins and facility managers are allowed to call this endpoint."
+          },
+          "response": []
+        },
+        {
+          "name": "Update room",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}",
+                "description": "JWT token for an admin or facility manager user."
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"capacity\": 20,\n  \"equipment\": [\"projector\", \"whiteboard\"],\n  \"location\": \"Building B - Floor 1\",\n  \"status\": \"active\"\n}"
+            },
+            "url": {
+              "raw": "{{rooms_base_url}}/rooms/{{room_id}}",
+              "host": [
+                "{{rooms_base_url}}"
+              ],
+              "path": [
+                "rooms",
+                "{{room_id}}"
+              ]
+            },
+            "description": "Update the details of an existing room (capacity, equipment, location, status). Admin / Facility Manager only."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete room",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}",
+                "description": "JWT token for an admin or facility manager user."
+              }
+            ],
+            "url": {
+              "raw": "{{rooms_base_url}}/rooms/{{room_id}}",
+              "host": [
+                "{{rooms_base_url}}"
+              ],
+              "path": [
+                "rooms",
+                "{{room_id}}"
+              ]
+            },
+            "description": "Delete a room by its id. Admin / Facility Manager only. Expected response: 204 No Content on success."
+          },
+          "response": []
+        },
+        {
+          "name": "List rooms (with filters)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{rooms_base_url}}/rooms?capacity={{capacity}}&location={{location}}&equipment={{equipment}}",
+              "host": [
+                "{{rooms_base_url}}"
+              ],
+              "path": [
+                "rooms"
+              ],
+              "query": [
+                {
+                  "key": "capacity",
+                  "value": "{{capacity}}",
+                  "description": "Optional minimum capacity filter."
+                },
+                {
+                  "key": "location",
+                  "value": "{{location}}",
+                  "description": "Optional location filter."
+                },
+                {
+                  "key": "equipment",
+                  "value": "{{equipment}}",
+                  "description": "Optional equipment filter (e.g. 'projector')."
+                }
+              ]
+            },
+            "description": "Retrieve a list of rooms with optional filters: capacity, location, equipment. Accessible to any authenticated user."
+          },
+          "response": []
+        },
+        {
+          "name": "Get room by id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{rooms_base_url}}/rooms/{{room_id}}",
+              "host": [
+                "{{rooms_base_url}}"
+              ],
+              "path": [
+                "rooms",
+                "{{room_id}}"
+              ]
+            },
+            "description": "Retrieve detailed information for a single room by its identifier."
+          },
+          "response": []
+        },
+        {
+          "name": "Get room status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{rooms_base_url}}/rooms/{{room_id}}/status?start_time={{start_time}}&end_time={{end_time}}",
+              "host": [
+                "{{rooms_base_url}}"
+              ],
+              "path": [
+                "rooms",
+                "{{room_id}}",
+                "status"
+              ],
+              "query": [
+                {
+                  "key": "start_time",
+                  "value": "{{start_time}}",
+                  "description": "Optional start time (ISO 8601) for dynamic availability checks."
+                },
+                {
+                  "key": "end_time",
+                  "value": "{{end_time}}",
+                  "description": "Optional end time (ISO 8601) for dynamic availability checks."
+                }
+              ]
+            },
+            "description": "Return the static status (e.g. active/out_of_service) and the dynamic availability for a given time window (once Bookings is integrated)."
+          },
+          "response": []
+        }
+      ]
+    },
+      {
+    "name": "Bookings",
+    "item": [
+      {
+        "name": "Get my bookings",
+        "request": {
+          "method": "GET",
+          "header": [
+            {
+              "key": "Authorization",
+              "value": "Bearer {{access_token}}",
+              "description": "JWT for a regular user."
+            }
+          ],
+          "url": {
+            "raw": "{{bookings_base_url}}/bookings/me",
+            "host": [
+              "{{bookings_base_url}}"
+            ],
+            "path": [
+              "bookings",
+              "me"
+            ]
+          },
+          "description": "Return all bookings that belong to the currently authenticated user."
+        },
+        "response": []
+      },
+      {
+        "name": "Create booking",
+        "request": {
+          "method": "POST",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "key": "Authorization",
+              "value": "Bearer {{access_token}}",
+              "description": "JWT for a regular user."
+            }
+          ],
+          "body": {
+            "mode": "raw",
+            "raw": "{\n  \"room_id\": 1,\n  \"start_time\": \"2025-01-01T10:00:00\",\n  \"end_time\": \"2025-01-01T11:00:00\",\n  \"title\": \"Team sync\"\n}"
+          },
+          "url": {
+            "raw": "{{bookings_base_url}}/bookings",
+            "host": [
+              "{{bookings_base_url}}"
+            ],
+            "path": [
+              "bookings"
+            ]
+          },
+          "description": "Create a new booking for a room and time window. Fails with 409 if there is a conflicting confirmed booking."
+        },
+        "response": []
+      },
+      {
+        "name": "Update my booking",
+        "request": {
+          "method": "PUT",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "key": "Authorization",
+              "value": "Bearer {{access_token}}"
+            }
+          ],
+          "body": {
+            "mode": "raw",
+            "raw": "{\n  \"start_time\": \"2025-01-01T11:00:00\",\n  \"end_time\": \"2025-01-01T12:00:00\"\n}"
+          },
+          "url": {
+            "raw": "{{bookings_base_url}}/bookings/{{booking_id}}",
+            "host": [
+              "{{bookings_base_url}}"
+            ],
+            "path": [
+              "bookings",
+              "{{booking_id}}"
+            ]
+          },
+          "description": "Update an existing booking owned by the current user. Server returns 403 if the booking belongs to someone else."
+        },
+        "response": []
+      },
+      {
+        "name": "Cancel my booking",
+        "request": {
+          "method": "DELETE",
+          "header": [
+            {
+              "key": "Authorization",
+              "value": "Bearer {{access_token}}"
+            }
+          ],
+          "url": {
+            "raw": "{{bookings_base_url}}/bookings/{{booking_id}}",
+            "host": [
+              "{{bookings_base_url}}"
+            ],
+            "path": [
+              "bookings",
+              "{{booking_id}}"
+            ]
+          },
+          "description": "Cancel a booking owned by the current user (soft delete)."
+        },
+        "response": []
+      },
+      {
+        "name": "List all bookings (admin/facility/auditor)",
+        "request": {
+          "method": "GET",
+          "header": [
+            {
+              "key": "Authorization",
+              "value": "Bearer {{admin_token}}",
+              "description": "Token for an admin, facility manager, or auditor."
+            }
+          ],
+          "url": {
+            "raw": "{{bookings_base_url}}/admin/bookings",
+            "host": [
+              "{{bookings_base_url}}"
+            ],
+            "path": [
+              "admin",
+              "bookings"
+            ]
+          },
+          "description": "List all bookings in the system. Restricted to admin/facility_manager/auditor roles."
+        },
+        "response": []
+      },
+      {
+        "name": "Create booking with override (admin only)",
+        "request": {
+          "method": "POST",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "key": "Authorization",
+              "value": "Bearer {{admin_token}}"
+            }
+          ],
+          "body": {
+            "mode": "raw",
+            "raw": "{\n  \"room_id\": 1,\n  \"start_time\": \"2025-01-01T08:00:00\",\n  \"end_time\": \"2025-01-01T09:00:00\"\n}"
+          },
+          "url": {
+            "raw": "{{bookings_base_url}}/admin/bookings/override",
+            "host": [
+              "{{bookings_base_url}}"
+            ],
+            "path": [
+              "admin",
+              "bookings",
+              "override"
+            ]
+          },
+          "description": "Create a booking that force-cancels conflicting reservations. Admin only."
+        },
+        "response": []
+      },
+      {
+        "name": "Force-cancel booking (admin only)",
+        "request": {
+          "method": "POST",
+          "header": [
+            {
+              "key": "Authorization",
+              "value": "Bearer {{admin_token}}"
+            }
+          ],
+          "url": {
+            "raw": "{{bookings_base_url}}/admin/bookings/{{booking_id}}/force-cancel",
+            "host": [
+              "{{bookings_base_url}}"
+            ],
+            "path": [
+              "admin",
+              "bookings",
+              "{{booking_id}}",
+              "force-cancel"
+            ]
+          },
+          "description": "Admin-only operation that force-cancels a booking even if it conflicts with others."
+        },
+        "response": []
+      }
+    ]
+  }
+
+  ]
+}

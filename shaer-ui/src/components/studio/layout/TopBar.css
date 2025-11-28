@@ -1,0 +1,38 @@
+.studio-topbar {
+  background: var(--shaer-emerald);
+  border-bottom: 1px solid var(--shaer-gold-soft);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 24px;
+  height: 56px;
+  grid-column: 1 / -1;
+}
+
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.topbar-left:hover {
+  opacity: 0.8;
+}
+
+.topbar-logo {
+  font-size: 24px;
+}
+
+.topbar-title {
+  color: var(--shaer-cream);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.topbar-user {
+  color: var(--shaer-cream);
+  font-size: 14px;
+  opacity: 0.7;
+}

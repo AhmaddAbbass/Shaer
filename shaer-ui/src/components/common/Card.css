@@ -1,0 +1,26 @@
+.shaer-card {
+  border-radius: var(--shaer-border-radius);
+  padding: 24px;
+  transition: all 0.3s ease;
+}
+
+.shaer-card--default {
+  background: white;
+  border: 1px solid var(--shaer-gold);
+}
+
+.shaer-card--default:hover {
+  border-color: var(--shaer-emerald);
+  box-shadow: var(--shaer-shadow-soft);
+}
+
+.shaer-card--emerald {
+  background: var(--shaer-emerald-soft);
+  border: 1px solid var(--shaer-gold);
+}
+
+.shaer-card--cream {
+  background: var(--shaer-cream);
+  border: 2px solid var(--shaer-gold);
+  box-shadow: var(--shaer-shadow-soft);
+}

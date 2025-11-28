@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import os
+from pathlib import Path
 from typing import List, Optional
 
 import chromadb
@@ -28,18 +29,27 @@ class ChromaClient:
         self.collection = self._get_collection()
 
     def _embedding_function(self):
-        if not self.settings.openai_api_key:
+        # Prefer OpenAI if key is set
+        if self.settings.openai_api_key:
+            if "OPENAI_API_KEY" not in os.environ:
+                os.environ["OPENAI_API_KEY"] = self.settings.openai_api_key
+            return embedding_functions.OpenAIEmbeddingFunction(
+                api_key_env_var="OPENAI_API_KEY",
+                model_name=self.settings.openai_embedding_model,
+            )
+
+        # Fallback to SentenceTransformer (no API key needed)
+        try:
+            return embedding_functions.SentenceTransformerEmbeddingFunction(
+                model_name=self.settings.sentence_embed_model
+            )
+        except Exception as exc:
             self.logger.warning(
-                "OPENAI_API_KEY not set; Chroma queries will fail unless the collection "
-                "was created with a server-side embedding function."
+                "Failed to create SentenceTransformer embedding function (%s); "
+                "will rely on collection's stored embedding function if present.",
+                exc,
             )
             return None
-        if "OPENAI_API_KEY" not in os.environ and self.settings.openai_api_key:
-            os.environ["OPENAI_API_KEY"] = self.settings.openai_api_key
-        return embedding_functions.OpenAIEmbeddingFunction(
-            api_key_env_var="OPENAI_API_KEY",
-            model_name=self.settings.openai_embedding_model,
-        )
 
     def _build_client(self) -> ClientAPI:
         mode = (self.settings.chroma_mode or "persistent").lower()
@@ -59,6 +69,11 @@ class ChromaClient:
             "Connecting to Chroma persistent store at %s",
             self.settings.chroma_persist_dir,
         )
+        # Ensure the directory exists to avoid sqlite/open failures.
+        try:
+            Path(self.settings.chroma_persist_dir).mkdir(parents=True, exist_ok=True)
+        except Exception as exc:  # pragma: no cover - defensive
+            self.logger.warning("Could not create CHROMA_PERSIST_DIR (%s): %s", self.settings.chroma_persist_dir, exc)
         return chromadb.PersistentClient(
             path=self.settings.chroma_persist_dir,
             settings=chromadb.Settings(anonymized_telemetry=False),

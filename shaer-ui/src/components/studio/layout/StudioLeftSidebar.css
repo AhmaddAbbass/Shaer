@@ -1,0 +1,52 @@
+.studio-left-sidebar {
+  background: var(--shaer-emerald-dark);
+  border-right: 1px solid rgba(216, 178, 92, 0.2);
+  padding: 24px;
+  overflow-y: auto;
+}
+
+.sidebar-section {
+  margin-bottom: 32px;
+}
+
+.sidebar-title {
+  color: var(--shaer-gold);
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-family: 'Noto Naskh Arabic', serif;
+  direction: rtl;
+}
+
+.modes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.prompts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.prompt-chip {
+  background: transparent;
+  border: 1px solid var(--shaer-gold);
+  color: var(--shaer-gold);
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  text-align: right;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Noto Naskh Arabic', serif;
+  direction: rtl;
+}
+
+.prompt-chip:hover {
+  background: rgba(216, 178, 92, 0.1);
+  border-color: var(--shaer-gold-soft);
+}

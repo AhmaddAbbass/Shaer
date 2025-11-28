@@ -1,0 +1,67 @@
+.library-panel {
+  animation: fadeIn 0.3s ease;
+}
+
+.library-empty {
+  color: var(--shaer-muted);
+  font-size: 14px;
+  text-align: center;
+  padding: 40px 20px;
+  font-family: 'Noto Naskh Arabic', serif;
+  direction: rtl;
+}
+
+.library-items {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.library-item {
+  background: var(--shaer-emerald-soft);
+  border: 1px solid var(--shaer-gold);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.library-title {
+  color: var(--shaer-cream);
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  font-family: 'Noto Naskh Arabic', serif;
+  direction: rtl;
+}
+
+.library-poet {
+  color: var(--shaer-gold-soft);
+  font-size: 14px;
+  margin-bottom: 12px;
+  font-family: 'Noto Naskh Arabic', serif;
+  direction: rtl;
+}
+
+.library-tags {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.library-tag {
+  background: var(--shaer-gold);
+  color: var(--shaer-emerald);
+  padding: 4px 10px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 500;
+  font-family: 'Noto Naskh Arabic', serif;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

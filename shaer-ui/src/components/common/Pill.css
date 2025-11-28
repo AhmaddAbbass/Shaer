@@ -1,0 +1,30 @@
+.shaer-pill {
+  padding: 10px 20px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  background: transparent;
+  color: var(--shaer-gold);
+  border: 2px solid var(--shaer-gold);
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.shaer-pill--small {
+  padding: 6px 14px;
+  font-size: 13px;
+}
+
+.shaer-pill:hover {
+  background: rgba(216, 178, 92, 0.1);
+}
+
+.shaer-pill--active {
+  background: var(--shaer-gold);
+  color: var(--shaer-emerald);
+  border-color: var(--shaer-gold);
+}
+
+.shaer-pill--active:hover {
+  background: var(--shaer-gold-soft);
+}
