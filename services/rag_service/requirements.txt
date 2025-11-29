@@ -6,3 +6,5 @@ neo4j
 chromadb
 httpx
 sentence-transformers
+rapidfuzz
+hf_transfer

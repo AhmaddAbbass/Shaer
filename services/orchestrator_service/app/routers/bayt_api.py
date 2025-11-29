@@ -5,10 +5,11 @@ from fastapi import APIRouter, Depends, Request
 from services.common_schemas.schemas import PoemSpec
 
 from ..context import ServiceRegistry
-from ..schemas import FixBaytRequest, FixBaytResponse, ScoreBaytRequest, ScoreBaytResponse
+from ..schemas import AgentStep, FixBaytRequest, FixBaytResponse, ScoreBaytRequest, ScoreBaytResponse
 from ..settings import Settings
 from ..utils.feedback import summarize_feedback
 from ..utils.normalization import normalize_single_bayt
+from ..utils.safety import guard_poetry_topic
 
 router = APIRouter(prefix="/bayt", tags=["bayt"])
 
@@ -33,9 +34,12 @@ async def fix_bayt(
     registry: ServiceRegistry = Depends(get_registry),
 ) -> FixBaytResponse:
     settings = registry.settings
+    guard_poetry_topic(payload.verse_text, settings)
     verse_text = normalize_single_bayt(payload.verse_text)
     spec = _spec_from_request(payload, settings)
     previous = payload.previous_verses
+
+    agent_trace: list[AgentStep] = []
 
     scoring = await registry.scoring_client.score_bayt(
         verse_text, spec, previous, use_openai_scoring=payload.use_openai_scoring
@@ -43,6 +47,14 @@ async def fix_bayt(
     attempts = 0
     while not scoring.passed and attempts < settings.max_retries_per_bayt:
         summary = summarize_feedback(scoring)
+        agent_trace.append(
+            AgentStep(
+                step=len(agent_trace) + 1,
+                agent="scoring_service",
+                tool="score",
+                summary=f"البيت لم يجتز؛ ملاحظات: {' / '.join(summary)[:120]}",
+            )
+        )
         verse_text = await registry.enhancer_client.enhance_bayt(
             spec,
             previous,
@@ -55,7 +67,15 @@ async def fix_bayt(
             verse_text, spec, previous, use_openai_scoring=payload.use_openai_scoring
         )
         attempts += 1
-    return FixBaytResponse(verse_text=verse_text, scoring=scoring)
+    agent_trace.append(
+        AgentStep(
+            step=len(agent_trace) + 1,
+            agent="scoring_service",
+            tool="score",
+            summary=f"البيت مقبول بعد {attempts} محاولات.",
+        )
+    )
+    return FixBaytResponse(verse_text=verse_text, scoring=scoring, agent_trace=agent_trace or None)
 
 
 @router.post("/score", response_model=ScoreBaytResponse)
@@ -63,6 +83,7 @@ async def score_bayt(
     payload: ScoreBaytRequest,
     registry: ServiceRegistry = Depends(get_registry),
 ) -> ScoreBaytResponse:
+    guard_poetry_topic(payload.verse_text, registry.settings)
     spec = _spec_from_request(payload, registry.settings)
     verse_text = normalize_single_bayt(payload.verse_text)
     scoring = await registry.scoring_client.score_bayt(

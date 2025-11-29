@@ -4,6 +4,7 @@ import sys
 from pathlib import Path
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 ROOT_DIR = Path(__file__).resolve().parents[3]
 if str(ROOT_DIR) not in sys.path:
@@ -21,6 +22,14 @@ def create_app() -> FastAPI:
     logger = get_logger("agent_service")
 
     app = FastAPI(title="Agent Service", version="0.1.0")
+
+    # Allow the UI (Vite dev server) to call this service cross-origin.
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
     @app.on_event("shutdown")
     async def _shutdown() -> None:

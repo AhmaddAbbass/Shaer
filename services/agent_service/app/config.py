@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     orchestrator_base_url: str = Field(
         default="http://localhost:8000", description="Base URL for orchestrator_service"
     )
-    http_timeout_seconds: float = Field(default=30.0, ge=1.0)
+    http_timeout_seconds: float = Field(default=120.0, ge=1.0)
 
 
 @lru_cache(maxsize=1)

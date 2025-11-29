@@ -3,16 +3,22 @@
 
 from __future__ import annotations
 
-from typing import List, Optional
+from typing import List, Literal, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
+
+
+class StrictBaseModel(BaseModel):
+    """Base model that forbids unexpected fields."""
+
+    model_config = ConfigDict(extra="forbid")
 
 
 # ---------------------------------------------------------------
 # Core poem-generation objects
 # ---------------------------------------------------------------
 
-class PoemSpec(BaseModel):
+class PoemSpec(StrictBaseModel):
     """
     Structured description of the poem we want to generate.
     This is what Yehia infers and what Shaer consumes.
@@ -24,6 +30,7 @@ class PoemSpec(BaseModel):
     )
     poem_meter: str = Field(
         ...,
+        min_length=1,
         description="Target meter name in Arabic, e.g. 'البسيط', 'الكامل'."
     )
     poem_theme: Optional[str] = Field(
@@ -40,11 +47,13 @@ class PoemSpec(BaseModel):
     )
     poem_description: str = Field(
         ...,
+        min_length=1,
         description="Short Arabic prose description of the overall poem content and mood."
     )
     num_verses: int = Field(
         ...,
         gt=0,
+        le=12,
         description="Total number of bayts (verses) in the poem."
     )
 
@@ -59,7 +68,7 @@ class PoemSpec(BaseModel):
     )
 
 
-class Verse(BaseModel):
+class Verse(StrictBaseModel):
     """
     One bayt: صدر + عجز on a single line.
     """
@@ -71,11 +80,12 @@ class Verse(BaseModel):
     )
     text: str = Field(
         ...,
+        min_length=1,
         description="Full bayt as a single line: 'الصدر ... العجز'."
     )
 
 
-class Poem(BaseModel):
+class Poem(StrictBaseModel):
     """
     A poem instance: spec + generated (or retrieved) verses.
     """
@@ -109,7 +119,7 @@ class Poem(BaseModel):
 # Evaluation / feedback objects
 # ---------------------------------------------------------------
 
-class BaytMeterEval(BaseModel):
+class BaytMeterEval(StrictBaseModel):
     """
     Output of the meter_service for a single bayt.
     """
@@ -134,7 +144,7 @@ class BaytMeterEval(BaseModel):
     )
 
 
-class YehiaFeedback(BaseModel):
+class YehiaFeedback(StrictBaseModel):
     """
     High-level feedback from Yehia about a single bayt,
     given the intended PoemSpec.
@@ -160,7 +170,7 @@ class YehiaFeedback(BaseModel):
 # RAG-related objects
 # ---------------------------------------------------------------
 
-class RagSearchRequest(BaseModel):
+class RagSearchRequest(StrictBaseModel):
     """
     Input for semantic search in the RAG service.
     """
@@ -172,11 +182,12 @@ class RagSearchRequest(BaseModel):
     top_k: int = Field(
         default=5,
         gt=0,
+        le=50,
         description="Number of candidates to retrieve from Chroma."
     )
 
 
-class RagSearchHit(BaseModel):
+class RagSearchHit(StrictBaseModel):
     """
     One search hit from Chroma + Neo4j.
     """
@@ -203,7 +214,7 @@ class RagSearchHit(BaseModel):
     )
 
 
-class RagSearchResponse(BaseModel):
+class RagSearchResponse(StrictBaseModel):
     """
     Wrapper for RAG search results.
     """
@@ -214,7 +225,7 @@ class RagSearchResponse(BaseModel):
     )
 
 
-class RagPoemRecord(BaseModel):
+class RagPoemRecord(StrictBaseModel):
     """
     Full poem record fetched from the graph / DB.
     """
@@ -241,17 +252,18 @@ class RagPoemRecord(BaseModel):
 # Generic LLM message shape
 # ---------------------------------------------------------------
 
-class LLMMessage(BaseModel):
+class LLMMessage(StrictBaseModel):
     """
     Minimal chat message structure shared between services
     when building prompts for Yehia / Shaer.
     """
 
-    role: str = Field(
+    role: Literal["system", "user", "assistant"] = Field(
         ...,
         description="One of: 'system', 'user', 'assistant'."
     )
     content: str = Field(
         ...,
+        min_length=1,
         description="Text content of the message."
     )

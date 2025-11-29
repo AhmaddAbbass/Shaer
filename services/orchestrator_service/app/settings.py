@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     scoring_service_url: str = Field(default="http://localhost:8107")
     enhancer_service_url: str = Field(default="http://localhost:8105")
 
-    http_timeout_seconds: float = Field(default=30.0, ge=1.0)
+    http_timeout_seconds: float = Field(default=120.0, ge=1.0)
     default_top_k_rag: int = Field(default=5, ge=1, le=20)
     max_retries_per_bayt: int = Field(default=3, ge=1, le=5)
     default_num_verses: int = Field(default=6, ge=1, le=12)

@@ -14,11 +14,12 @@ class YehiaServiceClient:
     async def close(self) -> None:
         await self._client.aclose()
 
-    async def feedback(self, verse_text: str, spec: PoemSpec, aspect: str | None) -> YehiaFeedback:
+    async def feedback(self, verse_text: str, spec: PoemSpec, aspect: str | None, previous_verses: list[str] | None = None) -> YehiaFeedback:
         payload: Dict[str, Any] = {
             "verse_text": verse_text,
             "spec": spec.model_dump(),
             "aspect": aspect,
+            "previous_verses": previous_verses,
         }
         response = await self._client.post("/feedback", json=payload)
         response.raise_for_status()

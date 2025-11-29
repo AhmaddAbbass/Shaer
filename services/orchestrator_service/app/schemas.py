@@ -8,6 +8,13 @@ from services.common_schemas.schemas import PoemSpec, RagSearchResponse
 from services.scoring_service.app.schemas import ScoreResponse
 
 
+class AgentStep(BaseModel):
+    step: int
+    agent: str
+    tool: str
+    summary: str
+
+
 class GeneratePoemRequest(BaseModel):
     user_query: str = Field(..., min_length=1)
     desired_num_verses: Optional[int] = Field(default=None, ge=1, le=12)
@@ -24,6 +31,7 @@ class GeneratePoemResponse(BaseModel):
     spec: PoemSpec
     verses: List[VerseWithScore]
     rag_hits: Optional[List[str]] = None
+    agent_trace: Optional[List[AgentStep]] = None
 
 
 class FixBaytRequest(BaseModel):
@@ -36,6 +44,7 @@ class FixBaytRequest(BaseModel):
 class FixBaytResponse(BaseModel):
     verse_text: str
     scoring: ScoreResponse
+    agent_trace: Optional[List[AgentStep]] = None
 
 
 class ScoreBaytRequest(BaseModel):

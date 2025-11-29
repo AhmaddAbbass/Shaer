@@ -1,0 +1,12 @@
+{
+  "name": "AspectJudgeResponse",
+  "schema": {
+    "type": "object",
+    "properties": {
+      "score_0_1": { "type": "number", "minimum": 0, "maximum": 1 },
+      "notes": { "type": "string" }
+    },
+    "required": ["score_0_1", "notes"],
+    "additionalProperties": false
+  }
+}
