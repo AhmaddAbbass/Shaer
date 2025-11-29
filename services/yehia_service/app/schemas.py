@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import List, Optional
+from typing import List, Optional, Literal
 
 from pydantic import BaseModel, Field, conint
 
@@ -32,6 +32,14 @@ class BuildSpecResponse(BaseModel):
 class FeedbackRequest(BaseModel):
     verse_text: str = Field(..., min_length=1, description="Bayt to critique")
     spec: PoemSpec
+    aspect: Optional[Literal["meaning", "cohesion", "fluency", "poeticness"]] = Field(
+        default=None,
+        description="Optional evaluation aspect to guide Yehia's feedback",
+    )
+    previous_verses: List[str] = Field(
+        default_factory=list,
+        description="Optional previous verses to provide cohesion context",
+    )
 
 
 class FeedbackResponse(BaseModel):

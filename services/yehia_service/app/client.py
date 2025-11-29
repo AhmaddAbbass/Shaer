@@ -131,7 +131,12 @@ class YehiaRunpodClient:
         )
 
     async def feedback(self, request: FeedbackRequest) -> YehiaFeedback:
-        messages = build_feedback_messages(request.verse_text, request.spec)
+        messages = build_feedback_messages(
+            request.verse_text,
+            request.spec,
+            request.aspect,
+            request.previous_verses,
+        )
         raw_text = await self._call_runpod(messages)
         return self._parse_feedback_text(raw_text)
 

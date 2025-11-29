@@ -17,6 +17,10 @@ class BaytGenerationRequest(BaseModel):
     poem_era: Optional[str] = Field(None, description="Optional era descriptor.")
     poet_name: Optional[str] = Field(None, description="Optional poet or style hint.")
     poem_title: Optional[str] = Field(None, description="Optional poem title.")
+    extra_guidance: List[str] = Field(
+        default_factory=list,
+        description="Optional short bullet points appended under إرشادات مهمة for extra focus.",
+    )
 
 
 class BaytGenerationResponse(BaseModel):

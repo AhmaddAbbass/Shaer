@@ -1,11 +1,11 @@
-FROM python:3.11-slim
+FROM python:3.12-slim
 
 WORKDIR /app
 
-COPY services/agent_service/requirements.txt /app/requirements.txt
-RUN pip install --no-cache-dir -r /app/requirements.txt
+COPY services/agent_service/requirements.txt requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
-COPY services/agent_service /app/services/agent_service
-COPY services/common_schemas /app/services/common_schemas
+COPY services/agent_service/app ./app
 
-CMD ["uvicorn", "services.agent_service.app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+ENV PORT=8000
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

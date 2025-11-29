@@ -26,6 +26,18 @@ def build_messages(request: BaytGenerationRequest) -> List[dict[str, str]]:
     era = request.poem_era.strip() if request.poem_era and request.poem_era.strip() else DEFAULT_ERA
     poet = request.poet_name.strip() if request.poet_name and request.poet_name.strip() else DEFAULT_POET
     previous_block = _format_previous_verses(request.previous_verses)
+    guidance_lines = [
+        "- أخرج بيتًا واحدًا مكوّنًا من صدر وعجز في سطر واحد.",
+        "- التزم بالبحر الشعري، وبجوّ ومعنى القصيدة كما في الوصف والأبيات السابقة (إن وُجدت).",
+        "- لا تكرّر أي بيت سابق ولا تضف شروحًا أو عناوين أو علامات خاصة؛ الناتج هو البيت فقط.",
+    ]
+    extra_tips = []
+    for tip in request.extra_guidance:
+        clean_tip = tip.strip()
+        if clean_tip:
+            extra_tips.append(f"- {clean_tip}")
+    if extra_tips:
+        guidance_lines.extend(extra_tips)
 
     user_content = (
         "المطلوب منك في هذه المهمة أن تولّد بيتًا شعريًا واحدًا فقط، وفق المواصفات التالية:\n\n"
@@ -38,9 +50,7 @@ def build_messages(request: BaytGenerationRequest) -> List[dict[str, str]]:
         "الأبيات السابقة في القصيدة:\n"
         f"{previous_block}\n\n"
         "إرشادات مهمة:\n"
-        "- أخرج بيتًا واحدًا مكوّنًا من صدر وعجز في سطر واحد.\n"
-        "- التزم بالبحر الشعري، وبجوّ ومعنى القصيدة كما في الوصف والأبيات السابقة (إن وُجدت).\n"
-        "- لا تكرّر أي بيت سابق ولا تضف شروحًا أو عناوين أو علامات خاصة؛ الناتج هو البيت فقط."
+        + "\n".join(guidance_lines)
     )
 
     return [

@@ -1,18 +1,11 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, HTTPException
 
-from .orchestrator import OrchestratorService
-from .schemas import ChatRequest, ChatResponse
+from .clients import OrchestratorClient, get_client
+from .schemas import ProxyRequest, ProxyResponse
 
 router = APIRouter()
-
-
-def get_orchestrator(request: Request) -> OrchestratorService:
-    orchestrator = getattr(request.app.state, "orchestrator", None)
-    if orchestrator is None:
-        raise RuntimeError("Orchestrator service is not initialized")
-    return orchestrator
 
 
 @router.get("/health")
@@ -20,9 +13,16 @@ async def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
-@router.post("/api/chat", response_model=ChatResponse)
-async def chat_endpoint(
-    payload: ChatRequest,
-    orchestrator: OrchestratorService = Depends(get_orchestrator),
-) -> ChatResponse:
-    return await orchestrator.handle_chat(payload)
+@router.post("/proxy", response_model=ProxyResponse)
+async def proxy_endpoint(
+    request: ProxyRequest,
+    orch: OrchestratorClient = Depends(get_client),
+) -> ProxyResponse:
+    path = request.target or "/poem/generate"
+    if not path.startswith("/"):
+        path = "/" + path
+    try:
+        data = await orch.forward_json(path, request.payload)
+    except Exception as exc:  # pragma: no cover - pass-through errors
+        raise HTTPException(status_code=502, detail=str(exc))
+    return ProxyResponse(data=data)

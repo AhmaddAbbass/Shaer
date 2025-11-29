@@ -5,7 +5,12 @@
 4. `services/rag_service`
 5. `services/meter_service`
 6. `services/ashaar_meter_service`
-7. Root-level `docker-compose.yml` + basic tests.
+7. `services/enhancer_service`
+8. `services/scoring_service`
+9. `services/aspect_evaluator_service`
+10. `services/orchestrator_service`
+11. `services/agent_service` (proxy to orchestrator)
+12. Root-level `docker-compose.yml` + basic tests.
 
 ---
 
@@ -365,6 +370,61 @@ We now expose two focused services:
 * `app/config.py` – optional knobs (weights, log level).
 * `tests/test_ashaar.py` – ensure scoring pipeline works with dummy BaitAnalysis.
 * Dockerfile installs Ashaar deps (PyTorch optional) plus FastAPI.
+
+### 5.3 `services/enhancer_service/`
+
+**High-level role:** Receives the failed bayt plus its evaluation metadata and produces a single improved candidate by re-calling `shaer_service` without breaking the Shaer SFT prompt scaffold.
+
+### Files & responsibilities
+
+* `app/__init__.py`
+* `app/main.py` – bootstraps FastAPI, wires the Shaer HTTP client and the enhancement planner, exposes `/health` and `/enhance-bayt`.
+* `app/api.py` – validates `EnhanceBaytRequest`, runs the planner, calls `shaer_service`, and returns the normalized candidate + applied policy notes.
+* `app/schemas.py` – request/response models composed of `BaytGenerationRequest`, `BaytMeterEval`, and `YehiaFeedback`.
+* `app/config.py` – env vars for downstream URL/timeout plus knobs such as `MAX_EXTRA_GUIDANCE`, `ENABLE_DESCRIPTION_TIGHTENING`, `METER_FOCUS_THRESHOLD`.
+* `app/clients.py` – lightweight HTTPX wrapper for `/generate-bayt` on `shaer_service`.
+* `app/policy.py` – core enhancement policy (decides when to tighten description vs. add short instructions, trims feedback summaries to 1–3 bullets, normalizes outputs).
+* `app/logging.py`, optional `README.md`.
+
+**Guardrails enforced:**
+
+* Never edits the poem directly – it only tweaks allowed request fields and adds up to a few short guidance bullets before delegating to Shaer.
+* Meter issues trigger a meter-focused bullet; semantic issues tighten the description and optionally add a semantic bullet.
+* Returns a single normalized bayt along with a list of applied adjustments so the orchestrator knows what was changed.
+
+### 5.4 `services/scoring_service/`
+
+**High-level role:** Compute the deterministic weighted final score for a bayt evaluation so the orchestrator doesn’t hard-code scoring logic.
+
+* `app/main.py`, `app/api.py` – exposes `/health` and `/score` (accepts normalized component scores and optional Yehia score, returns final score + pass flag + breakdown).
+* `app/schemas.py` – Pydantic models validating that each component is in `[0,1]` (and Yehia score in `[0,100]`).
+* `app/scoring.py` – implements the fixed equation and clamps output to `[0,1]` before comparing against `SCORING_PASS_THRESHOLD`.
+* `app/config.py`, `app/logging.py`, `README.md` – standard service plumbing.
+
+This service is stateless and arithmetically combines the inputs: `0.5*meter + 0.15*meaning + 0.15*fluency + 0.1*poeticness + 0.1*cohesion`, marking `passed` when the result ≥ threshold.
+
+### 5.5 `services/aspect_evaluator_service/`
+
+**High-level role:** For each generated bayt, gather Yehia’s aspect-focused critiques (meaning, cohesion, fluency, poeticness) and transform them into calibrated numeric scores via OpenAI Structured Outputs.
+
+* `app/clients.py` – async Yehia client hitting `/feedback` with the `aspect` hint.
+* `app/openai_judge.py` – wraps the OpenAI Responses API (gpt-4o-mini) with a JSON schema (`score_0_1`, `notes`) and deterministic temperature.
+* `app/evaluator.py` – orchestrates 4× Yehia calls + OpenAI scoring, normalizing verse text and including previous verses for cohesion checks.
+* `app/schemas.py` – request/response models for `/evaluate-bayt` (all aspects) and `/evaluate-aspect` (single aspect) with stable keys.
+* `prompts.py` – aspect rubrics + schema definition; `README.md` documents env vars (`ASPECT_EVAL_*`).
+
+The service never fixes poetry nor computes final scores; it only returns `{aspect: {yehia_feedback, judge}}` so `scoring_service` and `enhancer_service` can reuse the structured outputs.
+
+### 5.6 `services/orchestrator_service/`
+
+**High-level role:** The UI only calls this service. It interprets intent and executes deterministic workflows by chaining the downstream microservices (RAG → Yehia → Shaer → scoring/enhancer).
+
+* `app/main.py` wires shared settings + downstream HTTP clients and mounts the routers.
+* `routers/poem_api.py` – `/poem/generate` handles bayt-by-bayt generation (optional RAG search, `yehia_service` spec building, `shaer_service` generation, `scoring_service` evaluation, `enhancer_service` retries).
+* `routers/bayt_api.py` – `/bayt/fix` and `/bayt/score` normalize single verses, call `scoring_service`, and optionally trigger the enhancer loop.
+* `routers/library_api.py` – `/library/search` proxies to `rag_service` for retrieval flows.
+* `clients/` – httpx clients for rag, yehia, shaer, scoring, enhancer so the orchestrator never generates/fixes poetry itself.
+* `utils/` – normalization helper plus scoring-feedback summarizer (1–3 actionable bullets) passed into enhancer requests to keep Shaer’s prompt scaffold intact.
 
 ---
 
