@@ -38,12 +38,14 @@ The paper reports:
 
 Final evaluation uses direct held-out benchmark datasets with `3,481` generations per system.
 
-| Model | Meter | Meaning | Fluency | Coherence | Poeticness | Description Adherence |
-|---|---:|---:|---:|---:|---:|---:|
-| `Shaer` | `0.9064` | `3.72` | `4.31` | `3.69` | `3.82` | `4.75` |
-| `Yehia-7B` | `0.1494` | `3.75` | `4.21` | `3.82` | `3.73` | `4.42` |
-| `Fanar-Diwan` | `0.6488` | `3.70` | `4.26` | `3.69` | `3.79` | `N/A` |
-| `Ashaar` | `0.8535` | `2.84` | `3.46` | `2.84` | `3.00` | `N/A` |
+| Model | Meter | Count Adherence | Meaning | Fluency | Coherence | Poeticness | Description Adherence |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| `Shaer` | `0.9064` | `0.9792` | `3.72` | `4.31` | `3.69` | `3.82` | `4.75` |
+| `Yehia-7B` | `0.1494` | `0.7680` | `3.75` | `4.21` | `3.82` | `3.73` | `4.42` |
+| `Fanar-Diwan` | `0.6488` | `N/A` | `3.70` | `4.26` | `3.69` | `3.79` | `N/A` |
+| `Ashaar` | `0.8535` | `N/A` | `2.84` | `3.46` | `2.84` | `3.00` | `N/A` |
+
+`Count Adherence` and `Description Adherence` are reported only for `Shaer` and `Yehia-7B`, which were evaluated under the description-conditioned instruction setup with an explicit requested hemistich count. `Ashaar` and `Fanar-Diwan` are shown as `N/A` for those columns because their native benchmark interfaces do not expose the same control variable.
 
 Shared 4-metric average (`meaning`, `fluency`, `coherence`, `poeticness`):
 
