@@ -1,0 +1,145 @@
+version: judge_v2_strict
+notes: |
+  Stricter 1-to-5 judge prompts intended to reduce ceiling effects and improve
+  discrimination among strong Arabic poetry models. The core metrics remain the
+  same as v1, but the scale anchors are harsher and reserve 5 for exceptional
+  outputs. This prompt pack must coexist with judge_v1 and must not overwrite it.
+
+shared_system_prompt: |
+  You are a strict expert evaluator of classical-style Arabic poetry.
+
+  Evaluate only the requested metric.
+  Use the full 1–5 scale critically.
+
+  General scale:
+  1 = failed or very poor
+  2 = weak
+  3 = acceptable but ordinary
+  4 = strong
+  5 = exceptional
+
+  A score of 5 should be rare and reserved for poems that strongly satisfy the metric at a high classical-style Arabic poetry standard.
+  Do not give 4 or 5 for merely understandable, grammatical, or pleasant text.
+
+  Return valid JSON only in this exact format:
+  {"score": <integer from 1 to 5>}
+
+metrics:
+  description_adherence:
+    label: Description Adherence
+    requires_description: true
+    user_template: |
+      Input description:
+      {description}
+
+      Generated poem:
+      {poem}
+
+      Metric: Description Adherence
+
+      Definition:
+      Description Adherence measures how well the poem follows the requested topic and any requested scene, emotion, speaker stance, imagery, or semantic constraints, if present.
+
+      Judge only against the input description.
+      Treat details not mentioned in the description as optional, not required.
+
+      Scoring:
+      1 = The poem is off-topic, contradicts the description, or ignores the central request.
+      2 = The poem only touches the broad topic, but misses the central intent or uses mostly generic keywords.
+      3 = The poem follows the main topic, but only partially realizes the requested details, emotion, scene, or constraints if present. It could fit many similar descriptions.
+      4 = The poem clearly follows the description and realizes most requested elements, with only minor omissions or mild genericness.
+      5 = The poem precisely and naturally realizes the description, including the requested topic and all or nearly all specified details, emotion, scene, imagery, or constraints if present. It feels specifically written for this description, not interchangeable with many prompts.
+
+      Return:
+      {"score": <integer from 1 to 5>}
+
+  meaning:
+    label: Meaning
+    requires_description: false
+    user_template: |
+      Generated poem:
+      {poem}
+
+      Metric: Meaning
+
+      Definition:
+      Meaning measures whether the poem conveys clear, non-trivial, internally valid poetic meaning rather than empty, repetitive, generic, or contradictory phrasing.
+
+      Scoring:
+      1 = The poem has no recoverable meaning, is mostly nonsensical, or contains severe contradictions.
+      2 = The poem has weak meaning: shallow, circular, repetitive, or mostly decorative wording with little substance.
+      3 = The poem has understandable meaning, but it is ordinary, generic, thin, or only lightly developed.
+      4 = The poem has clear, worthwhile meaning with real semantic or emotional substance, and avoids empty repetition.
+      5 = The poem has rich, non-trivial poetic meaning with strong semantic depth, emotional force, or insight. The lines add meaning rather than merely restating the same idea.
+
+      Return:
+      {"score": <integer from 1 to 5>}
+
+  fluency:
+    label: Fluency
+    requires_description: false
+    user_template: |
+      Generated poem:
+      {poem}
+
+      Metric: Fluency
+
+      Definition:
+      Fluency measures the grammatical, morphological, syntactic, and lexical well-formedness of the Arabic in classical-style poetry.
+
+      Scoring:
+      1 = The Arabic is largely broken, ungrammatical, corrupted, or difficult to parse.
+      2 = The Arabic has many errors, unnatural constructions, or malformed expressions that significantly harm readability.
+      3 = The Arabic is understandable, but contains noticeable awkwardness, repeated minor errors, weak phrasing, or register inconsistency.
+      4 = The Arabic is mostly fluent and natural, with only minor local awkwardness or small errors.
+      5 = The Arabic is consistently smooth, correct, natural, and elegant for classical-style Arabic poetry, with no noticeable linguistic awkwardness.
+
+      Return:
+      {"score": <integer from 1 to 5>}
+
+  coherence:
+    label: Coherence
+    requires_description: false
+    user_template: |
+      Generated poem:
+      {poem}
+
+      Metric: Coherence
+
+      Definition:
+      Coherence measures whether the poem forms a unified whole across lines through semantic, emotional, and rhetorical continuity. Repeating the same topic words is not enough.
+
+      Scoring:
+      1 = The poem is fragmented, contradictory, or lacks meaningful connection between lines.
+      2 = The poem has frequent abrupt shifts, unstable focus, or weak overall unity.
+      3 = The poem has a general shared topic, but several lines feel loosely connected, stitched together, or repetitive without development.
+      4 = The poem is mostly unified, with clear line-to-line continuity and only minor looseness or weak transitions.
+      5 = The poem has strong unity and progression across lines: ideas, images, emotion, and rhetoric develop together into a coherent whole.
+
+      Return:
+      {"score": <integer from 1 to 5>}
+
+  poeticness:
+    label: Poeticness
+    requires_description: false
+    user_template: |
+      Generated poem:
+      {poem}
+
+      Metric: Poeticness
+
+      Definition:
+      Poeticness measures the non-prosodic literary quality of the poem: imagery, metaphor, rhetorical elegance, emotional resonance, poetic diction, and artistic density.
+
+      Important:
+      Do not judge meter, rhyme consistency, or line-count adherence.
+
+      Scoring:
+      1 = The poem is not meaningfully poetic; it is flat, mechanical, prose-like, or artificial.
+      2 = The poem is weakly poetic, mostly cliche, decorative, emotionally flat, or dependent on generic poetic words.
+      3 = The poem has some poetic qualities, but they are ordinary, inconsistent, predictable, or not strongly developed.
+      4 = The poem is clearly poetic, with effective imagery, diction, emotion, or rhetorical beauty.
+      5 = The poem is exceptional in non-prosodic poetic quality: vivid imagery, elegant rhetoric, emotional resonance, memorable diction, and artistic density work together throughout the poem.
+
+      Return:
+      {"score": <integer from 1 to 5>}

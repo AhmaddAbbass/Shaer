@@ -1,0 +1,133 @@
+version: judge_v1
+notes: |
+  Frozen 1-to-5 judge prompts for the five semantic/literary metrics used in
+  post-hoc evaluation. These prompts are intended for one-metric-at-a-time
+  scoring. Description Adherence must use the input description only. Poeticness
+  must exclude meter, rhyme consistency, and line-count adherence.
+
+shared_system_prompt: |
+  You are an expert evaluator of classical-style Arabic poetry.
+
+  Evaluate only the requested metric.
+  Return valid JSON only in this exact format:
+  {"score": <integer from 1 to 5>}
+
+metrics:
+  description_adherence:
+    label: Description Adherence
+    requires_description: true
+    user_template: |
+      Input description:
+      {description}
+
+      Generated poem:
+      {poem}
+
+      Metric: Description Adherence
+
+      Definition:
+      Description Adherence measures how well the poem follows the requested topic and any requested scene, emotion, speaker stance, imagery, or semantic constraints, if present.
+
+      Important:
+      Judge only against the input description.
+
+      Scoring:
+      1 = The poem does not follow the description or contradicts it.
+      2 = The poem has only a weak or generic relation to the description.
+      3 = The poem partially follows the description but misses important requested elements.
+      4 = The poem mostly follows the description with minor omissions or mild genericness.
+      5 = The poem strongly and naturally realizes the description.
+
+      Return:
+      {"score": <integer from 1 to 5>}
+
+  meaning:
+    label: Meaning
+    requires_description: false
+    user_template: |
+      Generated poem:
+      {poem}
+
+      Metric: Meaning
+
+      Definition:
+      Meaning measures whether the poem conveys clear, non-trivial, internally valid poetic meaning rather than empty, repetitive, or contradictory phrasing.
+
+      Scoring:
+      1 = The poem has no clear meaning, is mostly nonsensical, or is severely contradictory.
+      2 = The poem has very shallow, repetitive, or weak meaning.
+      3 = The poem has understandable meaning, but it is generic, thin, or only partly developed.
+      4 = The poem has clear and worthwhile meaning with some semantic or emotional depth.
+      5 = The poem has rich, clear, non-trivial poetic meaning with strong semantic or emotional depth.
+
+      Return:
+      {"score": <integer from 1 to 5>}
+
+  fluency:
+    label: Fluency
+    requires_description: false
+    user_template: |
+      Generated poem:
+      {poem}
+
+      Metric: Fluency
+
+      Definition:
+      Fluency measures the grammatical, morphological, syntactic, and lexical well-formedness of the Arabic.
+
+      Scoring:
+      1 = The Arabic is largely broken, ungrammatical, or difficult to parse.
+      2 = The Arabic has many errors that significantly harm readability.
+      3 = The Arabic is understandable but has noticeable awkwardness or repeated errors.
+      4 = The Arabic is mostly fluent with only minor awkwardness or small errors.
+      5 = The Arabic is smooth, correct, and natural for classical-style Arabic poetry.
+
+      Return:
+      {"score": <integer from 1 to 5>}
+
+  coherence:
+    label: Coherence
+    requires_description: false
+    user_template: |
+      Generated poem:
+      {poem}
+
+      Metric: Coherence
+
+      Definition:
+      Coherence measures whether the poem forms a unified whole across lines through semantic, emotional, and rhetorical continuity, not mere topic repetition.
+
+      Scoring:
+      1 = The poem is fragmented, contradictory, or lacks connection between lines.
+      2 = The poem has frequent abrupt shifts and weak overall unity.
+      3 = The poem has some unity, but several lines feel loosely connected or stitched together.
+      4 = The poem is mostly unified with minor looseness or weak transitions.
+      5 = The poem has strong continuity and unity across its lines.
+
+      Return:
+      {"score": <integer from 1 to 5>}
+
+  poeticness:
+    label: Poeticness
+    requires_description: false
+    user_template: |
+      Generated poem:
+      {poem}
+
+      Metric: Poeticness
+
+      Definition:
+      Poeticness measures the non-prosodic literary quality of the poem, including imagery, metaphor, rhetorical elegance, emotional resonance, and poetic diction.
+
+      Important:
+      Do not judge meter, rhyme consistency, or line-count adherence.
+
+      Scoring:
+      1 = The poem is not meaningfully poetic; it is flat, mechanical, or prose-like.
+      2 = The poem is weakly poetic, mostly cliche, artificial, or emotionally flat.
+      3 = The poem has some poetic qualities but is inconsistent or generic.
+      4 = The poem is clearly poetic, with good imagery, diction, or emotional force.
+      5 = The poem is strongly poetic, vivid, elegant, emotionally resonant, and rhetorically rich.
+
+      Return:
+      {"score": <integer from 1 to 5>}

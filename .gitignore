@@ -1,0 +1,50 @@
+# Secrets / local env
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ipynb_checkpoints/
+
+# Virtual environments
+.venv/
+venv/
+
+# Local runtime artifacts
+logs/
+outputs/
+checkpoints/
+artifacts/
+watcher_state/
+description_generation/cache/
+evaluation/outputs/
+grpo/outputs/
+grpo/cache/
+grpo/.watcher_state/
+grpo/watcher_state/
+sft/outputs/
+sft/watcher_state/
+*.log
+*.pid
+
+# Large model / checkpoint files
+*.safetensors
+*.pt
+*.pth
+*.bin
+
+# HF / general cache
+.hf_cache/
+.cache/
+
+# Local helper folders
+help/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/

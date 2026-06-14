@@ -1,0 +1,217 @@
+run:
+  seed: 42
+  run_name_prefix: shaer_grpo
+  output_root: outputs/train
+  base_model_id: Navid-AI/Yehia-7B-preview
+  start_adapter_repo: Shaer-AI/Shaer-adapters
+  start_adapter_mode: fresh_sft/train
+  output_model_repo: Shaer-AI/Shaer-adapters-grpo-short1k-no-trio-v5
+
+dataset:
+  train_dataset_id: Shaer-AI/ashaar-enhanced-desc-baseform-final-sft-lte20-min500-splits-grpo-meter-count-v1
+  source_dataset_id: Shaer-AI/ashaar-with-enhanced-descriptions-baseform-final-sft-lte20-min500-splits
+  train_manifest_path: outputs/curated_meter_count_easyfirst_short_drop_trio/cap_1000/selected_manifest.csv
+  hard_diagnostic_manifest_path: outputs/curated_meter_count_easyfirst_short_drop_trio/hard_diagnostic_cap_256/selected_manifest.csv
+  train_split: train
+  eval_split: eval
+  test_split: test
+  eval_bank_per_meter_per_bucket: 4
+  test_bank_per_meter_per_bucket: 4
+  eval_allowed_length_buckets: ["1-3", "4-6"]
+  eval_drop_meters: ["المديد", "المنسرح", "الهزج"]
+
+studies:
+  inspect_lengths:
+    output_root: outputs/inspect_lengths
+    coverage_target: 0.90
+    push_filtered_default: false
+
+  publish_grpo_splits:
+    output_root: outputs/publish_grpo_splits
+    seed: 42
+    validation_total: 80
+    test_total: 80
+    validation_short_per_meter: 4
+    validation_full_per_meter: 0
+    test_short_per_meter: 4
+    test_full_per_meter: 0
+
+  sanity_check_model:
+    output_root: outputs/sanity_check_model_base_n5_k5
+    backend: vllm
+    n_prompts_per_meter: 5
+    k_generations: 5
+    thresholds: [0.3, 0.5, 0.7, 0.9]
+    max_new_tokens: 384
+    temperature: 0.95
+    top_p: 0.95
+    seed: 42
+    vllm_gpu_memory_utilization: 0.30
+    vllm_tensor_parallel_size: 1
+    vllm_dtype: bfloat16
+    vllm_max_loras: 1
+    vllm_max_lora_rank: 64
+    flashinfer_disable_version_check: true
+
+  sanity_check_rewards:
+    output_root: outputs/sanity_check_rewards
+    golden_samples: 39
+    seed: 42
+    sample_strategy: balanced_by_base_meter
+
+phase1:
+  active_rewards:
+    - meter
+    - count_adherence
+    - hard_gate
+    - judge_quality
+    - judge_meaning_fit
+    - judge_naturalness
+    - repeat_soft
+    - total_composite
+
+  inactive_rewards:
+    - arabic_clean
+    - arabic_floor
+    - count_floor
+    - lexical_plausibility
+    - repeat_penalty
+    - repeat_floor
+    - near_duplicate_penalty
+    - opening_diversity
+    - distinct_2
+    - exact_count_bonus
+    - meter_count_clean
+    - meaning_fit
+    - meaning_substance
+    - fluency
+    - poeticness
+    - cohesion
+
+  reward_weights:
+    meter: 0.0
+    count_adherence: 0.0
+    arabic_clean: 0.0
+    hard_gate: 0.0
+    repeat_soft: 0.0
+    arabic_floor: 0.0
+    count_floor: 0.0
+    lexical_plausibility: 0.0
+    judge_quality: 0.0
+    judge_meaning_fit: 0.0
+    judge_naturalness: 0.0
+    repeat_penalty: 0.0
+    repeat_floor: 0.0
+    near_duplicate_penalty: 0.0
+    opening_diversity: 0.0
+    distinct_2: 0.0
+    total_composite: 1.0
+
+  judge_quality_prompt_file: prompts/judge_quality_selected.yaml
+  judge_quality_cache_dir: outputs/judge_quality_cache
+  judge_quality_max_workers: 4
+  judge_meaning_fit_prompt_file: prompts/judge_meaning_fit_v1.yaml
+  judge_naturalness_prompt_file: prompts/judge_naturalness_v1.yaml
+  judge_cache_dir: outputs/judge_quality_cache
+  judge_max_workers: 4
+
+model:
+  load_in_4bit: true
+  bnb_4bit_quant_type: nf4
+  bnb_4bit_use_double_quant: true
+  gradient_checkpointing: true
+
+generation:
+  use_vllm: true
+  vllm_mode: colocate
+  vllm_gpu_memory_utilization: 0.50
+  max_prompt_length: 1024
+  max_completion_length: 512
+  temperature: 0.9
+  top_p: 1.0
+  num_generations: 8
+  num_generations_eval: 1
+
+trainer:
+  learning_rate: 1.0e-5
+  per_device_train_batch_size: 1
+  per_device_eval_batch_size: 8
+  gradient_accumulation_steps: 8
+  max_steps: 3300
+  logging_steps: 1
+  eval_steps: 50
+  save_steps: 50
+  save_total_limit: 4
+  beta: 0.0
+  scale_rewards: group
+  loss_type: dapo
+  mask_truncated_completions: true
+  remove_unused_columns: false
+  report_to: []
+  bf16: true
+  load_best_model_at_end: true
+  metric_for_best_model: eval_reward_total_mean
+  greater_is_better: true
+  hub_strategy: checkpoint
+
+sanity_check:
+  output_root: outputs/sanity_check
+  max_steps: 2
+  num_generations: 2
+  subset_size: 8
+  save_steps: 1
+  eval_steps: 1
+  logging_steps: 1
+
+logging:
+  save_env_snapshot: true
+  save_config_snapshot: true
+  metrics_jsonl_name: metrics.jsonl
+  metrics_csv_name: metrics.csv
+  train_log_name: train.log
+  generations_jsonl_name: all_generations.jsonl
+  checkpoint_events_name: checkpoint_events.jsonl
+  split_summary_name: split_summary.json
+  plots_dir_name: plots
+
+watcher:
+  enabled: true
+  interval_minutes: 30
+  send_on_checkpoint: true
+  send_on_error: true
+
+preprocess_grpo:
+  output_root: outputs/preprocess_grpo
+  num_generations: 6
+  generator_batch_size: 32
+  max_prompt_length: 1024
+  max_completion_length: 640
+  temperature: 1.0
+  top_p: 1.0
+  progress_every: 10
+  vllm_gpu_memory_utilization: 0.75
+  vllm_tensor_parallel_size: 1
+  vllm_dtype: bfloat16
+  vllm_max_loras: 1
+  vllm_max_lora_rank: 64
+  flashinfer_disable_version_check: true
+  trust_remote_code: true
+
+preprocess_grpo_pipeline:
+  output_root: outputs/preprocess_grpo_pipeline
+  num_generations: 6
+  generator_batch_size: 32
+  max_prompt_length: 1024
+  max_completion_length: 640
+  temperature: 1.0
+  top_p: 1.0
+  progress_every: 10
+  judge_poll_seconds: 20
+  judge_claim_stale_after_seconds: 1800
+  vllm_gpu_memory_utilization: 0.75
+  vllm_tensor_parallel_size: 1
+  vllm_dtype: bfloat16
+  vllm_max_loras: 1
+  vllm_max_lora_rank: 64
+  flashinfer_disable_version_check: true
+  trust_remote_code: true

@@ -1,0 +1,110 @@
+defaults:
+  model_repo_id: Shaer-AI/Shaer-adapters
+  dataset_id: Shaer-AI/ashaar-with-enhanced-descriptions-baseform-final-sft-lte20-min500-splits
+  init_adapter_repo_id: Shaer-AI/Shaer-adapters
+  init_adapter_subfolder: adapters/fresh_sft/train/latest
+  continuation_namespace: fresh_sft
+  seed: 42
+  push_to_hub: true
+  heartbeat_seconds: 30
+  jsonl_metrics: true
+  jsonl_events: true
+  debug_dump_first_batch: true
+  log_level: INFO
+  hf_home: /root/workspace/Shaer/sft/.hf_cache
+  hub_cache: /root/workspace/Shaer/sft/.hf_cache/hub
+  init_from_adapter: false
+  init_adapter_path: ""
+  use_weighted_sampler: true
+  remote_keep_last_checkpoints: 3
+
+model:
+  base_model: Navid-AI/Yehia-7B-preview
+  trust_remote_code: true
+  torch_dtype: bfloat16
+  use_cache: false
+  gradient_checkpointing: true
+
+quantization:
+  load_in_4bit: true
+  bnb_4bit_quant_type: nf4
+  bnb_4bit_use_double_quant: true
+  bnb_4bit_compute_dtype: bfloat16
+  prepare_model_for_kbit_training: true
+
+lora:
+  target_modules: all-linear
+  r: 64
+  alpha: 128
+  dropout: 0.05
+  bias: none
+  task_type: CAUSAL_LM
+  use_rslora: true
+
+optimizer:
+  optim: paged_adamw_8bit
+  learning_rate: 8.0e-5
+  lr_scheduler_type: cosine
+  warmup_ratio: 0.03
+  weight_decay: 0.0
+  max_grad_norm: 1.0
+
+training:
+  bf16: true
+  fp16: false
+  per_device_train_batch_size: 1
+  per_device_eval_batch_size: 1
+  gradient_accumulation_steps: 16
+  num_train_epochs: 2
+  logging_steps: 10
+  eval_steps: 200
+  save_steps: 200
+  save_total_limit: 3
+  load_best_model_at_end: true
+  metric_for_best_model: eval_loss
+  greater_is_better: false
+
+data:
+  max_length: 1024
+  packing: true
+  completion_only_loss: true
+  truncation_mode: keep_end
+  min_bayts: 0
+  max_bayts: 0
+  drop_meters: []
+
+splits:
+  probe_per_meter: 2
+  live_eval_per_meter: 4
+  full_eval_per_meter: 8
+  oversample_max_multiplier: 2.0
+
+meter_aux:
+  enabled: false
+  lambda: 0.1
+  normalize_by_log_num_classes: true
+
+probe_generation:
+  max_new_tokens: 192
+  batch_size: 4
+  do_sample: false
+  temperature: 0.8
+
+plateau:
+  stop_on_plateau: false
+  min_full_eval_points: 2
+  patience: 4
+  full_eval_min_delta: 0.005
+  probe_meter_min_delta: 0.01
+  probe_count_min_delta: 0.005
+
+train:
+  max_steps: -1
+
+sanity:
+  max_steps: 6
+  save_steps: 2
+  live_eval_steps: 2
+  full_eval_steps: 4
+  logging_steps: 1
+  save_total_limit: 2

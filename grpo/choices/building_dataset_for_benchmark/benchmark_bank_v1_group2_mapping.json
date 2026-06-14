@@ -1,0 +1,87 @@
+{
+  "wrong_desc_cost": 0.95446826799212,
+  "perm": [
+    2,
+    3,
+    0,
+    7,
+    6,
+    9,
+    8,
+    1,
+    5,
+    4
+  ],
+  "mapping": [
+    {
+      "pair_id": 0,
+      "poem_source_index": 20181,
+      "wrong_description_source_index": 32667,
+      "poem_meter_label": "مخلع البسيط",
+      "wrong_description_meter_label": "مجزوء البسيط"
+    },
+    {
+      "pair_id": 1,
+      "poem_source_index": 6083,
+      "wrong_description_source_index": 73223,
+      "poem_meter_label": "السريع",
+      "wrong_description_meter_label": "الرمل"
+    },
+    {
+      "pair_id": 2,
+      "poem_source_index": 32667,
+      "wrong_description_source_index": 20181,
+      "poem_meter_label": "مجزوء البسيط",
+      "wrong_description_meter_label": "مخلع البسيط"
+    },
+    {
+      "pair_id": 3,
+      "poem_source_index": 73223,
+      "wrong_description_source_index": 42466,
+      "poem_meter_label": "الرمل",
+      "wrong_description_meter_label": "مجزوء الكامل"
+    },
+    {
+      "pair_id": 4,
+      "poem_source_index": 86244,
+      "wrong_description_source_index": 29798,
+      "poem_meter_label": "المجتث",
+      "wrong_description_meter_label": "مجزوء الخفيف"
+    },
+    {
+      "pair_id": 5,
+      "poem_source_index": 67279,
+      "wrong_description_source_index": 44306,
+      "poem_meter_label": "الوافر",
+      "wrong_description_meter_label": "الهزج"
+    },
+    {
+      "pair_id": 6,
+      "poem_source_index": 29798,
+      "wrong_description_source_index": 3918,
+      "poem_meter_label": "مجزوء الخفيف",
+      "wrong_description_meter_label": "الطويل"
+    },
+    {
+      "pair_id": 7,
+      "poem_source_index": 42466,
+      "wrong_description_source_index": 6083,
+      "poem_meter_label": "مجزوء الكامل",
+      "wrong_description_meter_label": "السريع"
+    },
+    {
+      "pair_id": 8,
+      "poem_source_index": 3918,
+      "wrong_description_source_index": 67279,
+      "poem_meter_label": "الطويل",
+      "wrong_description_meter_label": "الوافر"
+    },
+    {
+      "pair_id": 9,
+      "poem_source_index": 44306,
+      "wrong_description_source_index": 86244,
+      "poem_meter_label": "الهزج",
+      "wrong_description_meter_label": "المجتث"
+    }
+  ]
+}

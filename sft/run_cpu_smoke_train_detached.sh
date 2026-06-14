@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$ROOT_DIR"
+
+export SFT_MODEL_REPO_ID="${SFT_MODEL_REPO_ID:-Shaer-AI/Shaer-adapters}"
+export SFT_DATASET_ID="${SFT_DATASET_ID:-Shaer-AI/ashaar-with-enhanced-descriptions-baseform-final-sft-lte20-min500-splits}"
+export SFT_BASE_MODEL_ID="${SFT_BASE_MODEL_ID:-sshleifer/tiny-gpt2}"
+export SFT_TRUST_REMOTE_CODE="${SFT_TRUST_REMOTE_CODE:-false}"
+export SFT_TORCH_DTYPE="${SFT_TORCH_DTYPE:-float32}"
+export SFT_BF16="${SFT_BF16:-false}"
+export SFT_FP16="${SFT_FP16:-false}"
+export SFT_GRADIENT_CHECKPOINTING="${SFT_GRADIENT_CHECKPOINTING:-false}"
+export SFT_LOAD_IN_4BIT="${SFT_LOAD_IN_4BIT:-false}"
+export SFT_PREPARE_MODEL_FOR_KBIT_TRAINING="${SFT_PREPARE_MODEL_FOR_KBIT_TRAINING:-false}"
+export SFT_OPTIM="${SFT_OPTIM:-adamw_torch}"
+export SFT_RESUME_MODE="${SFT_RESUME_MODE:-fresh}"
+export SFT_INIT_FROM_ADAPTER="${SFT_INIT_FROM_ADAPTER:-false}"
+export SFT_CONTINUATION_NAMESPACE="${SFT_CONTINUATION_NAMESPACE:-fresh_sft_cpu_smoke}"
+export SFT_MAX_STEPS="${SFT_MAX_STEPS:-12}"
+export SFT_SAVE_STEPS="${SFT_SAVE_STEPS:-10}"
+export SFT_LIVE_EVAL_STEPS="${SFT_LIVE_EVAL_STEPS:-10}"
+export SFT_FULL_EVAL_STEPS="${SFT_FULL_EVAL_STEPS:-10}"
+export SFT_USE_WEIGHTED_SAMPLER="${SFT_USE_WEIGHTED_SAMPLER:-true}"
+export SFT_LIMIT_TRAIN_ROWS="${SFT_LIMIT_TRAIN_ROWS:-256}"
+export SFT_LIMIT_EVAL_ROWS="${SFT_LIMIT_EVAL_ROWS:-64}"
+export SFT_LIMIT_TEST_ROWS="${SFT_LIMIT_TEST_ROWS:-64}"
+export SFT_PROBE_MAX_NEW_TOKENS="${SFT_PROBE_MAX_NEW_TOKENS:-32}"
+export SFT_PROBE_BATCH_SIZE="${SFT_PROBE_BATCH_SIZE:-2}"
+export WATCHER_STEP_EMAIL_EVERY="${WATCHER_STEP_EMAIL_EVERY:-5}"
+
+bash run_train_detached.sh
