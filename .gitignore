@@ -44,6 +44,20 @@ sft/watcher_state/
 # Local helper folders
 help/
 
+# Local manuscript files
+paper.tex
+*.aux
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.out
+*.synctex.gz
+*.toc
+figures/*
+!figures/intro.png
+!figures/shaer_strict_v4_combined_figure.png
+
 # OS / editor
 .DS_Store
 Thumbs.db

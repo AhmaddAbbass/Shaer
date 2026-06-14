@@ -1,18 +1,22 @@
 # Non-Shaer Baselines
 
-This folder contains the utilities used to generate and score non-Shaer comparison systems for the final direct benchmark.
+This folder contains the baseline-generation and normalization code used for the paper comparisons against Shaer.
 
-## Final published comparison datasets
-
-The paper-facing comparison set is:
+## Released comparison datasets
 
 - `Shaer-AI/shaer-eval-ashaar-native-controls`
 - `Shaer-AI/shaer-eval-instruction-yehia-base-sft-chat-template`
 - `Shaer-AI/fanar-eval-native-prompt`
 
-Each of these datasets is one-row-per-prompt and is aligned to the final Shaer evaluation set.
+Each released dataset is aligned one-row-per-prompt with the final Shaer evaluation set.
 
-## Main scripts
+## Benchmark interpretation
+
+- `Ashaar` is evaluated in its native control-token format.
+- `Yehia` is evaluated with the same description-conditioned instruction template used for Shaer.
+- `Fanar` is evaluated in its native prompt format.
+
+## Exact scripts
 
 - [build_ashaar_native_manifest.py](./build_ashaar_native_manifest.py)
 - [generate_ashaar_native_baselines.py](./generate_ashaar_native_baselines.py)
@@ -26,31 +30,9 @@ Each of these datasets is one-row-per-prompt and is aligned to the final Shaer e
 - [combine_model_results.py](./combine_model_results.py)
 - [export_model_results_bundle.py](./export_model_results_bundle.py)
 
-## Current benchmark interpretation
+## Structural scoring
 
-- `Ashaar` is evaluated in its native control-token setup.
-- `Yehia` is evaluated with the description-conditioned instruction template.
-- `Fanar` is evaluated in its native prompt setup.
-
-Because the final benchmark is already direct one-row-per-prompt, this folder does not rely on an older multi-sample Shaer source dataset in the public workflow.
-
-## Ashaar native manifest
-
-The Ashaar-native manifest is reconstructed from the final source split dataset:
-
-- `Shaer-AI/ashaar-with-enhanced-descriptions-baseform-final-sft-lte20-min500-splits`, split `test`
-
-Example:
-
-```bash
-python "evaluate others/build_ashaar_native_manifest.py" \
-  --prompt-mode controls \
-  --output-jsonl evaluation/outputs/ashaar_native_manifest_controls.jsonl
-```
-
-## Scoring
-
-Baseline scoring reuses the same structural metric path as Shaer:
+Baseline structural scoring uses the same metric path as Shaer:
 
 ```bash
 python "evaluate others/score_baseline_meter_count.py" \
@@ -58,4 +40,4 @@ python "evaluate others/score_baseline_meter_count.py" \
   --output-jsonl <baseline_rows_scored.jsonl>
 ```
 
-The final literary metrics are added by the strict judge workflow in `evaluation/`.
+The strict literary metrics are then added by the workflow in [../evaluation/](../evaluation/).

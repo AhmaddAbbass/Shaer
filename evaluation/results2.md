@@ -61,7 +61,7 @@ The frozen prompt pack is:
 You are a strict expert evaluator of classical-style Arabic poetry.
 
 Evaluate only the requested metric.
-Use the full 1–5 scale critically.
+Use the full 1-5 scale critically.
 
 General scale:
 1 = failed or very poor
@@ -96,17 +96,6 @@ This avoids unfairly scoring native-prompt baselines on a metric they were not d
 
 Before launching the full rerun, a strict `v2` diagnostic was executed on `50` rows per model.
 
-Diagnostic run:
-
-- [C:\sjrun\judge_v2_strict_diagnostic_20260606_1015](</C:/sjrun/judge_v2_strict_diagnostic_20260606_1015>)
-
-Diagnostic summaries:
-
-- [shaer](</C:/sjrun/judge_v2_strict_diagnostic_20260606_1015/shaer/scored_rows.summary.json>)
-- [ashaar](</C:/sjrun/judge_v2_strict_diagnostic_20260606_1015/ashaar/scored_rows.summary.json>)
-- [yehia](</C:/sjrun/judge_v2_strict_diagnostic_20260606_1015/yehia/scored_rows.summary.json>)
-- [fanar](</C:/sjrun/judge_v2_strict_diagnostic_20260606_1015/fanar/scored_rows.summary.json>)
-
 The diagnostic behaved as intended:
 
 - `Ashaar` dropped clearly across the semantic and literary metrics
@@ -115,17 +104,6 @@ The diagnostic behaved as intended:
 - the scale used more `2/3/4` and fewer inflated `5`s
 
 ## Final strict v2 run
-
-Final run directory:
-
-- [C:\sjrun\judge_v2_strict_full_20260606_0031](</C:/sjrun/judge_v2_strict_full_20260606_0031>)
-
-Final summaries:
-
-- [shaer](</C:/sjrun/judge_v2_strict_full_20260606_0031/shaer/scored_rows.summary.json>)
-- [ashaar](</C:/sjrun/judge_v2_strict_full_20260606_0031/ashaar/scored_rows.summary.json>)
-- [yehia](</C:/sjrun/judge_v2_strict_full_20260606_0031/yehia/scored_rows.summary.json>)
-- [fanar](</C:/sjrun/judge_v2_strict_full_20260606_0031/fanar/scored_rows.summary.json>)
 
 All four datasets completed successfully.
 
@@ -234,6 +212,6 @@ For the base-model comparison specifically:
 The strict rerun tolerated isolated row-level judge failures instead of killing the whole run. As a result:
 
 - all datasets completed
-- any metric with a missing value is excluded from that metric’s mean instead of being silently treated as zero
+- any metric with a missing value is excluded from that metric's mean instead of being silently treated as zero
 
 This makes the final aggregation more robust than the earlier fail-fast behavior.

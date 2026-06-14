@@ -1,37 +1,37 @@
 # Evaluation
 
-This folder contains the paper-faithful evaluation code for Shaer and the comparison baselines.
+This folder contains the paper-faithful benchmark code for Shaer and the comparison baselines.
 
-## Final benchmark shape
+## Evaluated systems
 
-The benchmark uses direct one-row-per-prompt published datasets:
+The final benchmark uses direct one-row-per-prompt released datasets:
 
 - `Shaer-AI/shaer-sft-test`
 - `Shaer-AI/shaer-eval-ashaar-native-controls`
 - `Shaer-AI/shaer-eval-instruction-yehia-base-sft-chat-template`
 - `Shaer-AI/fanar-eval-native-prompt`
 
-The repo intentionally does not use an older multi-sample selection workflow in the public evaluation story.
+## Structural evaluation
 
-## Structural metrics
-
-Core structural scoring files:
+Core files:
 
 - [metrics.py](./metrics.py)
 - [score_meter_count.py](./score_meter_count.py)
 - [aggregate_results.py](./aggregate_results.py)
 
-These scripts reuse the established 4BiLSTM meter-classifier path from the repo and compute:
+These scripts compute:
 
 - `meter`
 - `count_adherence`
 
-## Strict judge evaluation
+The meter score is produced by the repo's established BiLSTM-based meter-classification path.
 
-Strict judge evaluation files:
+## Strict LLM-judge evaluation
 
-- [judge_llm.py](./judge_llm.py)
+Core files:
+
 - [judge_prompts_v2_strict.yaml](./judge_prompts_v2_strict.yaml)
+- [judge_llm.py](./judge_llm.py)
 - [judge_dataset_registry.py](./judge_dataset_registry.py)
 - [full_judge_orchestrator.py](./full_judge_orchestrator.py)
 - [full_judge_worker.py](./full_judge_worker.py)
@@ -48,16 +48,21 @@ Judge metrics:
 
 Metric applicability:
 
-- `description_adherence` applies to `Shaer` and `Yehia`
-- `Ashaar` and `Fanar` are scored only on the shared literary metrics
+- `description_adherence` is evaluated only for `Shaer` and `Yehia`
+- `Ashaar` and `Fanar` are evaluated on the four shared literary metrics only
 
-## Result notes
+Final judge model used in the paper:
 
-- [judge_choice.md](./judge_choice.md) — 50-reference judge-model selection study
-- [results.md](./results.md) — earlier judge notes
-- [results2.md](./results2.md) — final strict `v2` results used for reporting
+- `qwen/qwen3-235b-a22b-2507`
 
-## Detached execution helpers
+## Key result notes
+
+- [judge_choice.md](./judge_choice.md) - judge-model selection study
+- [results2.md](./results2.md) - final strict `v2` results used in reporting
+
+The older [results.md](./results.md) note is kept only as historical context for the earlier judge setup.
+
+## Detached runners
 
 - [launch_full_judge_detached.ps1](./launch_full_judge_detached.ps1)
 - [launch_monitor_detached.ps1](./launch_monitor_detached.ps1)
@@ -65,8 +70,9 @@ Metric applicability:
 
 ## Scope
 
-This folder is meant to preserve the final reproducible evaluation workflow that matches the reported benchmark:
+This folder preserves the final reproducible evaluation workflow that matches the paper:
 
-- structural scoring from the direct evaluation datasets
-- strict `v2` LLM judging
-- final dataset augmentation with judge metrics
+- direct benchmark datasets
+- structural meter and count scoring
+- strict `v2` judge prompts
+- final dataset augmentation with released judge metrics
