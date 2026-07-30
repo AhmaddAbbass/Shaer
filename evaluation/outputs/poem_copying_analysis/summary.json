@@ -1,0 +1,52 @@
+{
+  "total_generations": 3481,
+  "source_counts": {
+    "train_rows": 109070,
+    "heldout_test_rows": 3481,
+    "heldout_eval_rows": 3481
+  },
+  "parameters": {
+    "max_candidates": 100,
+    "max_posting_df": 500
+  },
+  "train": {
+    "normalized_exact": 0,
+    "any_shared_word13": 1,
+    "span_ge_30_words": 0,
+    "span_ge_20_words": 0,
+    "span_ge_10_words": 1,
+    "word5_jaccard_ge_050": 0,
+    "char5_jaccard_ge_070": 0,
+    "flagged_rows": 1,
+    "flagged_pct": 0.0287,
+    "mean_word5_jaccard": 0.000421,
+    "median_word5_jaccard": 0.0,
+    "max_word5_jaccard": 0.119048,
+    "mean_char5_jaccard": 0.001299,
+    "median_char5_jaccard": 0.0,
+    "max_char5_jaccard": 0.341772,
+    "mean_max_copied_word_span": 0.188452,
+    "median_max_copied_word_span": 0.0,
+    "max_copied_word_span": 13
+  },
+  "heldout_reference": {
+    "normalized_exact": 0,
+    "any_shared_word13": 4,
+    "span_ge_30_words": 0,
+    "span_ge_20_words": 0,
+    "span_ge_10_words": 10,
+    "word5_jaccard_ge_050": 0,
+    "char5_jaccard_ge_070": 0,
+    "flagged_rows": 4,
+    "flagged_pct": 0.1149,
+    "mean_word5_jaccard": 0.001743,
+    "median_word5_jaccard": 0.0,
+    "max_word5_jaccard": 0.219512,
+    "mean_char5_jaccard": 0.04717,
+    "median_char5_jaccard": 0.029801,
+    "max_char5_jaccard": 0.6,
+    "mean_max_copied_word_span": 1.961505,
+    "median_max_copied_word_span": 2.0,
+    "max_copied_word_span": 16
+  }
+}
