@@ -1,33 +1,30 @@
-# Additional Judge Run Handoff
+# Additional Judge Run Task
 
-Goal: rerun the locked strict `v2` judge prompts on the four released row-level evaluation datasets using two new OpenRouter judge models, and append prefixed metric columns without overwriting the existing `results2.md` columns.
+Goal: run the locked strict `v2` judge prompts on all released row-level evaluation datasets with two new OpenRouter judges, then append prefixed metric columns without changing the existing unprefixed scores.
 
-## Target Judge Models
+Use the new standalone runner only:
 
-- `qwen/qwen3.7-max`
-- `openai/gpt-5.6-terra`
+- `extra/run_additional_judges.py`
+- `extra/run_additional_judges.ps1`, optional Windows launcher
+- `extra/judge_prompts_v2_strict.yaml`
 
-Use these exact model IDs unless OpenRouter reports they are unavailable.
+Do not use the old evaluation runner scripts for this task.
 
-## Inputs
+## Judge Models
 
-- Repo: `C:\Users\Ahmad Abbas\Desktop\Shaer-Project\paper\Shaer`
-- Existing env file on this machine: `C:\Users\Ahmad Abbas\Desktop\Shaer-Project\.env`
-- Required env var: `OPENROUTER_API_KEY`
-- Important: the current judge code loads `.env` from the repo root, `C:\Users\Ahmad Abbas\Desktop\Shaer-Project\paper\Shaer\.env`. If that file does not exist on the new machine, either export `OPENROUTER_API_KEY` in the shell before running or copy only the needed variables into the repo-root `.env`.
-- Prompt pack: `evaluation/judge_prompts_v2_strict.yaml`
-- Existing result table to compare against: `evaluation/results2.md`
+- `qwen/qwen3.7-max`, prefix `qwen3_7_max`
+- `openai/gpt-5.6-terra`, prefix `gpt5_6_terra`
 
-Evaluation datasets:
+## Datasets
 
-- `Shaer-AI/shaer-sft-test`, key `shaer`, rows `3481`
-- `Shaer-AI/shaer-eval-ashaar-native-controls`, key `ashaar`, rows `3481`
-- `Shaer-AI/shaer-eval-instruction-yehia-base-sft-chat-template`, key `yehia`, rows `3481`
-- `Shaer-AI/fanar-eval-native-prompt`, key `fanar`, rows `3481`
+- `shaer`: `Shaer-AI/shaer-sft-test`, `3481` rows
+- `ashaar`: `Shaer-AI/shaer-eval-ashaar-native-controls`, `3481` rows
+- `yehia`: `Shaer-AI/shaer-eval-instruction-yehia-base-sft-chat-template`, `3481` rows
+- `fanar`: `Shaer-AI/fanar-eval-native-prompt`, `3481` rows
 
 ## Metrics
 
-For `shaer` and `yehia`, run:
+For `shaer` and `yehia`:
 
 - `description_adherence`
 - `meaning`
@@ -35,18 +32,16 @@ For `shaer` and `yehia`, run:
 - `coherence`
 - `poeticness`
 
-For `ashaar` and `fanar`, run:
+For `ashaar` and `fanar`:
 
 - `meaning`
 - `fluency`
 - `coherence`
 - `poeticness`
 
-Do not run `description_adherence` for `ashaar` or `fanar`.
+## Columns To Add
 
-## Required New Columns
-
-For Qwen 3.7 Max:
+Qwen 3.7 Max:
 
 - `qwen3_7_max_description_adherence`
 - `qwen3_7_max_meaning`
@@ -54,7 +49,7 @@ For Qwen 3.7 Max:
 - `qwen3_7_max_coherence`
 - `qwen3_7_max_poeticness`
 
-For GPT-5.6 Terra:
+GPT-5.6 Terra:
 
 - `gpt5_6_terra_description_adherence`
 - `gpt5_6_terra_meaning`
@@ -62,87 +57,105 @@ For GPT-5.6 Terra:
 - `gpt5_6_terra_coherence`
 - `gpt5_6_terra_poeticness`
 
-Only create/fill the applicable columns per dataset. Preserve the existing unprefixed columns such as `meaning`, `fluency`, `coherence`, `poeticness`, and `description_adherence`.
+Only applicable columns should be filled per dataset. Existing columns like `meaning`, `fluency`, `coherence`, `poeticness`, and `description_adherence` must stay unchanged.
 
-## Existing Scripts To Inspect
+## Environment
 
-- `evaluation/full_judge_orchestrator.py`
-- `evaluation/full_judge_worker.py`
-- `evaluation/judge_llm.py`
-- `evaluation/judge_dataset_registry.py`
-- `evaluation/merge_full_judge_results.py`
-- `evaluation/push_judge_metrics_to_hf_datasets.py`
+Required variables:
 
-Important: `push_judge_metrics_to_hf_datasets.py` currently writes unprefixed metric names. Adapt or replace it so it appends prefixed judge columns instead of overwriting canonical metric columns.
+- `OPENROUTER_API_KEY`
+- `HF_TOKEN`, if the Hugging Face datasets require authenticated access
 
-## Recommended Execution Plan
+The runner searches for `.env` in the current directory and parent directories. On this machine the existing env file was at:
 
-1. Verify `.env` contains a valid `OPENROUTER_API_KEY`.
-2. Run a tiny pilot for each model, for example `--limit-rows 2`, using `evaluation/judge_prompts_v2_strict.yaml`.
-3. Confirm the pilot produces valid integer scores from `1` to `5` for every applicable metric.
-4. Run the full judge for `qwen/qwen3.7-max` into a dedicated run directory.
-5. Run the full judge for `openai/gpt-5.6-terra` into a separate dedicated run directory.
-6. Merge worker outputs for each dataset/model.
-7. Materialize updated dataset files with new prefixed columns.
-8. Validate every dataset before any upload or final handoff.
-
-Suggested run directory pattern:
-
-```powershell
-evaluation/outputs/judge_qwen3_7_max_YYYYMMDD_HHMM
-evaluation/outputs/judge_gpt5_6_terra_YYYYMMDD_HHMM
+```text
+C:\Users\Ahmad Abbas\Desktop\Shaer-Project\.env
 ```
 
-Suggested full-run command shape:
+On a new machine, either place `.env` in the repo tree or export the variables in the shell.
+
+## Commands
+
+Install/check dependencies if needed:
 
 ```powershell
-python evaluation/full_judge_orchestrator.py `
-  --run-dir evaluation/outputs/judge_qwen3_7_max_FULL `
-  --workers 4 `
-  --judge-model qwen/qwen3.7-max `
-  --prompt-file evaluation/judge_prompts_v2_strict.yaml
+python -m pip install pandas pyarrow pyyaml huggingface_hub requests curl_cffi
 ```
 
-Use the same command for Terra with `--judge-model openai/gpt-5.6-terra` and a different `--run-dir`.
+Pilot run before spending money:
 
-## Scale And Cost
+```powershell
+python extra/run_additional_judges.py --limit-rows 2 --workers 2
+```
 
-Per judge model:
+Full run:
+
+```powershell
+python extra/run_additional_judges.py --workers 4
+```
+
+Equivalent Windows launcher:
+
+```powershell
+.\extra\run_additional_judges.ps1 --workers 4
+```
+
+If PowerShell blocks local scripts, use:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\extra\run_additional_judges.ps1 --workers 4
+```
+
+Optional upload after validation:
+
+```powershell
+python extra/run_additional_judges.py --workers 4 --push-to-hf
+```
+
+Do not use `--push-to-hf` with `--limit-rows`.
+
+## Output
+
+Default output root:
+
+```text
+extra/judge_runs/additional_judges
+```
+
+Important files:
+
+- `validation_summary.json`
+- `additional_judge_results.md`
+- `updated_datasets/<dataset>/<split-file>`
+- `scored_rows/<model-prefix>/<dataset>/scores.jsonl`
+- `cache/<model-prefix>/<dataset>/<metric>/*.json`
+
+The cache makes the run resumable. If the process stops, rerun the same command and completed calls should be reused.
+
+## Validation Checklist
+
+- All four datasets have exactly `3481` rows in the full run.
+- No duplicate row IDs.
+- Existing unprefixed metric columns remain present.
+- Every applicable prefixed score exists.
+- Every applicable prefixed score is an integer in `[1, 5]`.
+- `description_adherence` is filled only for `shaer` and `yehia`.
+- `ashaar` and `fanar` do not get non-null description-adherence judge columns.
+- Aggregate means are written to `additional_judge_results.md`.
+- `validation_summary.json` reports zero missing/invalid applicable scores.
+
+## Cost And Scale
+
+Per judge:
 
 - Rows: `13,924`
 - Calls: `62,658`
 - Estimated input tokens: `32,447,138`
-- Estimated output tokens: `375,948` minimum, `8,020,224` max cap
 
-Estimated full-run cost from `extra/llms.md`:
+Estimated cost:
 
 - `qwen/qwen3.7-max`: `$49.52 / $66.44 / $83.35` min/avg/max
 - `openai/gpt-5.6-terra`: `$43.38 / $72.04 / $100.71` min/avg/max
-- Both models: about `$92.90 / $138.48 / $184.06`
+- Both together: about `$92.90 / $138.48 / $184.06`
 
-Expected runtime with `4` workers:
-
-- Large non-reasoning judge: plan around `8-15` hours per model unless the provider is rate-limited.
-
-## Validation Checklist
-
-- All four datasets still have exactly `3481` rows.
-- Existing unprefixed judge columns are preserved unchanged.
-- All applicable prefixed columns exist for each model.
-- No applicable prefixed score is null/missing.
-- Every prefixed score is an integer in `[1, 5]`.
-- `description_adherence` prefixed columns are present for `shaer` and `yehia`.
-- `description_adherence` prefixed columns are absent or null-only for `ashaar` and `fanar`.
-- No duplicate row IDs appear after merging.
-- Worker logs contain no repeated parsing/API failures.
-- Aggregate means are recomputed per dataset/model/metric.
-- New aggregates are saved in a compact markdown or JSON summary.
-
-## Final Deliverables
-
-- Full run directories for both judges.
-- Updated local dataset split files with prefixed columns.
-- Validation summary showing row counts, missing counts, score ranges, and aggregate means.
-- If explicitly requested, push the updated dataset files to the same Hugging Face dataset repos.
-
-Do not overwrite `evaluation/results2.md`; create a new summary file for the additional judges.
+Expected wall time with `4` workers is roughly `8-15` hours per model, depending on OpenRouter/provider rate limits.
