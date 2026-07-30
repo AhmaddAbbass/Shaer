@@ -9,7 +9,7 @@ shared_system_prompt: |
   You are a strict expert evaluator of classical-style Arabic poetry.
 
   Evaluate only the requested metric.
-  Use the full 1-5 scale critically.
+  Use the full 1–5 scale critically.
 
   General scale:
   1 = failed or very poor
