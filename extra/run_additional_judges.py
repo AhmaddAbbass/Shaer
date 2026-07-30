@@ -492,7 +492,7 @@ def build_user_prompt(prompt_config: dict[str, Any], metric: str, poem: str, des
     template = str(metric_cfg["user_template"])
     if metric_cfg.get("requires_description") and not description.strip():
         raise RuntimeError(f"metric requires description but description is empty: {metric}")
-    return template.format(poem=poem, description=description)
+    return template.replace("{description}", description).replace("{poem}", poem)
 
 
 def require_text(row: dict[str, Any], field: str, dataset_key: str, row_id: str) -> str:
