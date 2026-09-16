@@ -12,17 +12,11 @@ It performs the paper-facing upstream work behind the final SFT release:
 4. rebuild the final SFT prompt/completion fields
 5. publish the final training datasets
 
-## Paper-facing corpus counts
+## Paper-facing corpus count
 
-The paper distinguishes two related corpus sizes:
+The released final SFT corpus contains **116,032 poems** after structural validation, length filtering, meter-support filtering, and enhanced-description assembly. Its deterministic split release contains 109,070 training rows, 3,481 evaluation rows, and 3,481 test rows.
 
-- **116,032 poems** after structural validation, length filtering, and meter-support filtering
-- **114,065 poems** retained after description verification for downstream training
-
-Those two numbers are not contradictory:
-
-- `116,032` is the cleaned metrical corpus
-- `114,065` is the verified-description subset reported for downstream training after the description-quality pipeline
+A historical intermediate description-verification subset is not the row count of the released training corpus and is not used to describe the final dataset or paper results.
 
 ## Released datasets
 

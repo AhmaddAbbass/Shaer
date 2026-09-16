@@ -30,33 +30,35 @@ The release aligns with the paper:
 The paper reports:
 
 - **116,032** structurally filtered classical poems after corpus cleaning
-- **114,065** verified-description rows retained for downstream training after description verification
+- **116,032** generated-description rows in the released training corpus
 - **13** classical base meters
 - **21** meter sub-form combinations
 
 ## Main results
 
-Final evaluation uses direct held-out benchmark datasets with `3,481` generations per system.
+Final evaluation uses the same `3,481` held-out prompts and one generated poem per system. Structural scores use the released meter/count evaluator; the strict semantic and literary scores use `qwen/qwen3-235b-a22b-2507` with the frozen v2 rubric.
 
-| Model | Meter | Count Adherence | Meaning | Fluency | Coherence | Poeticness | Description Adherence |
-|---|---:|---:|---:|---:|---:|---:|---:|
-| `Shaer` | `0.9064` | `0.9792` | `3.72` | `4.31` | `3.69` | `3.82` | `4.75` |
-| `Yehia-7B` | `0.1494` | `0.7680` | `3.75` | `4.21` | `3.82` | `3.73` | `4.42` |
-| `Fanar-Diwan` | `0.6488` | `N/A` | `3.70` | `4.26` | `3.69` | `3.79` | `N/A` |
-| `Ashaar` | `0.8535` | `N/A` | `2.84` | `3.46` | `2.84` | `3.00` | `N/A` |
+### Formal control
 
-`Count Adherence` and `Description Adherence` are reported only for `Shaer` and `Yehia-7B`, which were evaluated under the description-conditioned instruction setup with an explicit requested hemistich count. `Ashaar` and `Fanar-Diwan` are shown as `N/A` for those columns because their native benchmark interfaces do not expose the same control variable.
+| Model | Meter conformity | Poem-level base-meter accuracy | Count adherence | Exact count accuracy |
+|---|---:|---:|---:|---:|
+| `Shaer` | `0.9064` | `95.17%` | `0.9792` | `83.40%` |
+| `Yehia-7B` | `0.1494` | `26.49%` | `0.7680` | `44.47%` |
+| `Fanar-Diwan` | `0.6488` | `79.60%` | `N/A` | `N/A` |
+| `Ashaar` | `0.8535` | `91.30%` | `N/A` | `N/A` |
 
-Shared 4-metric average (`meaning`, `fluency`, `coherence`, `poeticness`):
+Meter conformity is the released continuous meter score. Poem-level base-meter accuracy is the corresponding published `meter_hit` result. Count metrics are reported only for `Shaer` and `Yehia-7B`, whose instruction interface exposes an explicit requested length.
 
-1. `Shaer` - `3.89`
-2. `Yehia-7B` - `3.88`
-3. `Fanar-Diwan` - `3.86`
-4. `Ashaar` - `3.04`
+### Strict semantic and literary evaluation
 
-Paper-facing result note:
+| Model | Description adherence | Meaning | Fluency | Coherence | Poeticness | Shared 4-metric mean |
+|---|---:|---:|---:|---:|---:|---:|
+| `Shaer` | `4.75` | `3.72` | `4.31` | `3.69` | `3.82` | `3.89` |
+| `Yehia-7B` | `4.42` | `3.75` | `4.21` | `3.82` | `3.73` | `3.88` |
+| `Fanar-Diwan` | `N/A` | `3.70` | `4.26` | `3.69` | `3.79` | `3.86` |
+| `Ashaar` | `N/A` | `2.84` | `3.46` | `2.84` | `3.00` | `3.04` |
 
-> Shaer preserves strong literary quality relative to Yehia while substantially improving formal metrical control.
+The shared mean is descriptive rather than an overall ranking: it averages only meaning, fluency, coherence, and poeticness. Description adherence is evaluated only for the two description-conditioned systems. See [the full strict-v2 report](./evaluation/results2.md) for the frozen prompt and aggregation details.
 
 ![Main results](./figures/shaer_strict_v4_combined_figure.png)
 
@@ -64,7 +66,7 @@ Paper-facing result note:
 
 ### Models
 
-- [`Shaer-AI/Shaer-adapters`](https://huggingface.co/Shaer-AI/Shaer-adapters) - released SFT adapter
+- [`Shaer-AI/Shaer-adapters`](https://huggingface.co/Shaer-AI/Shaer-adapters) - public released SFT adapter
 - Base model used for SFT: [`Navid-AI/Yehia-7B-preview`](https://huggingface.co/Navid-AI/Yehia-7B-preview)
 
 ### Training datasets
@@ -189,3 +191,7 @@ Final reported result notes:
 - This public repo intentionally reflects the paper-faithful workflow.
 - Older multi-sample evaluation workflows are intentionally absent from the public history.
 - GRPO code is kept as follow-up research material, not as the core reported method in the paper.
+
+## License and dataset provenance
+
+The repository code is released under [Apache-2.0](./LICENSE). The derived training datasets use mixed licensing: the separable Shaer descriptions and annotations are Apache-2.0, while the underlying Ashaar poem text remains subject to Ashaar's non-commercial/research-use restrictions. Users must comply with both components when using the released datasets.
