@@ -14,7 +14,7 @@ This repository is the paper-faithful public release. It contains the dataset co
 [![Hub](https://img.shields.io/badge/HuggingFace-Org-blue)](https://huggingface.co/Shaer-AI)
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/AhmaddAbbass/Shaer/blob/main/colab/shaer_use_intended_prompt_for_best_performance.ipynb)
 
-![Shaer intro](./figures/intro.png)
+![Shaer intro](./figures/sample_shaer_output.png)
 
 ## Release overview
 
